@@ -1,7 +1,7 @@
 {
   "name": "automerge-graph",
   "version": "0.1.0",
-  "description": "Automerge for graphs",
+  "description": "Automerge on graphlib via json-graph-lib",
   "main": "dist",
   "scripts": {
     "test": "jest"
