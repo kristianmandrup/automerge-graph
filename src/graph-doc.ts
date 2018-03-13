@@ -2,13 +2,15 @@ import {
   DocMutator,
 } from './doc-mutator'
 
+import * as toGraph from 'graphlib-json-graph'
+
 export function createGraphDoc(options: any) {
   return new GraphDoc(options)
 }
 
 export class GraphDoc {
   label: string
-  g: any
+  _g: any = {}
   mutator: DocMutator
 
   constructor(options: any = {}) {
@@ -17,19 +19,37 @@ export class GraphDoc {
     } = options
     this.mutator = new DocMutator(options)
     this.label = label || 'Automerge Graph'
-    this.merge(this.initialGraph)
+    this.merge(this.initialGraph, this._g)
   }
 
   get initialGraph() {
     return {
-      label: this.label,
-      nodes: [],
-      edges: []
+      graph: {
+        label: this.label,
+        nodes: [],
+        edges: []
+      }
     }
   }
 
-  merge(graph: any) {
-    this.mutator.merge(this.g, graph)
+  get g() {
+    return this._g.graph
+  }
+
+  get toGraph() {
+    return toGraph(this.g)
+  }
+
+  nodes() {
+    return this.toGraph.nodes()
+  }
+
+  edges() {
+    return this.toGraph.edges()
+  }
+
+  merge(graph: any, into?: any) {
+    this.mutator.merge(this.g || into, graph)
     return this
   }
 

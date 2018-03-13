@@ -2,6 +2,10 @@
 
 [automerge](https://github.com/automerge/automerge) for graphs, using [graphlib](https://github.com/dagrejs/graphlib) via [graphlib-json-graph](https://github.com/jsongraph/graphlib-json-graph)
 
+## Disclaimer
+
+Entiely untested. Please try it out and report bugs or help write the test suite in [jest]()
+
 ## Graphlib specification
 
 See the [graphlib specification](https://github.com/jsongraph/json-graph-specification#graphs-object) and [JSON graph format](http://jsongraphformat.info/) specs.
@@ -70,25 +74,71 @@ const autoGraph = createAutomergeGraph({
     name: 'kristian',
     age: 42
   })
-  .addNode('person:javier', {
+  .commit()
+
+  .addNode({
+    // alternative signature, passing id as key
+    id: 'person:javier',
     name: 'javier',
     age: 35
   })
+  .commit()
+
+// Will commit using the following auto-generated messages
+
+// => `added node: person:kristian`
+// => `added node: person:javier`
+
+// The other peers should see these commit messages as their underlying graph is updated
+```
+
+A user on anoter peer node (such as via [MPL](https://github.com/automerge/mpl)) can then receive automerge graph updates as JSON updates, that can be re-assembled back into a graphlib via [graphlib-json-graph]((https://github.com/jsongraph/graphlib-json-graph))
+
+The foreign peer user should be able to further make updates to the unerlying automerge document via the same AutoGraph API:
+
+```js
+// remote peer graph updates (on automerge doc)
+autoGraph
   .updateNode('person:javier', {
     job: 'web developer'
   })
+  .commit()
+
   .replaceNode('person:javier', {
     name: 'javier',
     age: 36
     // will implicitly delete the job key since not part of the new node
   })
+  .commit()
 
-Will commit using the following auto-generated messages
+// Will commit using the following auto-generated messages
 
-// => `added node: person:kristian`
-// => `added node: person:javier`
 // => `updated node: person:javier`
+// => `replaced node: person:javier`
+
+// The other peers should see these commit messages as their underlying graph is updated
 ```
+
+In the future we might make it possible to queue up multiple actions that can be commited as a batch of actions on a document.
+
+## Graphlib API gateway
+
+The graphlib API is available via `autoGraph.graph.toGraph`
+
+```js
+autoGraph.graph.toGraph.nodes()
+```
+
+A few delegation shorthands are currently available to get all `nodes` and `edges`.
+Currently these methods are performed lazily, ie. only when called.
+
+```js
+autoGraph.graph.nodes()
+// ...
+autoGraph.graph.edges()
+```
+
+We will likely set up a more convenient mode/setting to re-generate the graph on each action (JSON update).
 
 ## Customized messages
 
@@ -126,54 +176,6 @@ We will likely redesign this to make it easier to customize in a future release.
 ## Graphlib
 
 See [Graphlib specs](https://github.com/dagrejs/graphlib/wiki)
-
-```js
-var Graph = require("graphlib").Graph;
-
-// Create a new directed graph
-var g = new Graph();
-
-// Add node "a" to the graph with no label
-g.setNode("a");
-
-g.hasNode("a");
-// => true
-
-// Add node "b" to the graph with a String label
-g.setNode("b", "b's value");
-
-// Get the label for node b
-g.node("b");
-// => "b's value"
-
-// Add node "c" to the graph with an Object label
-g.setNode("c", { k: 123 });
-
-// What nodes are in the graph?
-g.nodes();
-// => `[ 'a', 'b', 'c' ]`
-
-// Add a directed edge from "a" to "b", but assign no label
-g.setEdge("a", "b");
-
-// Add a directed edge from "c" to "d" with an Object label.
-// Since "d" did not exist prior to this call it is automatically
-// created with an undefined label.
-g.setEdge("c", "d", { k: 456 });
-
-// What edges are in the graph?
-g.edges();
-// => `[ { v: 'a', w: 'b' },
-//       { v: 'c', w: 'd' } ]`.
-
-// Which edges leave node "a"?
-g.outEdges("a");
-// => `[ { v: 'a', w: 'b' } ]`
-
-// Which edges enter and leave node "d"?
-g.nodeEdges("d");
-// => `[ { v: 'c', w: 'd' } ]`
-```
 
 ## Author
 
