@@ -1,5 +1,7 @@
 # Automerge graph
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/kristianmandrup/automerge-graph.svg)](https://greenkeeper.io/)
+
 [automerge](https://github.com/automerge/automerge) for graphs, using [graphlib](https://github.com/dagrejs/graphlib) via [graphlib-json-graph](https://github.com/jsongraph/graphlib-json-graph)
 
 ## Graphlib specification
