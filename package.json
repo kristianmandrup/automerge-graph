@@ -1,0 +1,38 @@
+{
+  "name": "automerge-graph",
+  "version": "0.1.0",
+  "description": "Automerge for graphs",
+  "main": "dist",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "automerge",
+    "graph"
+  ],
+  "author": "Kristian Mandrup <kmandrup@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "automerge": "^0.7.1",
+    "graphlib-json-graph": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/deepmerge": "^1.3.3",
+    "@types/node": "^9.4.6",
+    "jest": "^22.4.2",
+    "@types/jest": "^22.1.4",
+    "ts-jest": "^22.4.1",
+    "typescript": "^2.7.2"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "transform": {
+      "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "/__tests__/.*\\.(ts|tsx|js)$"
+  }
+}

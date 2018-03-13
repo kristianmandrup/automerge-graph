@@ -1,0 +1,6 @@
+*.test.js
+__tests__
+/src
+tsconfig.json
+yarn.lock
+/example
