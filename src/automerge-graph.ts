@@ -30,7 +30,7 @@ export class AutomergeGraph {
       label
     } = options
     this.options = options
-    this.label = label
+    this.label = label || 'autograph'
     this.doc = createDoc(options)
     this.graph = new GraphDoc(options)
     this.committerOpts = Object.assign(options, {
@@ -43,22 +43,31 @@ export class AutomergeGraph {
     return this.graph.g
   }
 
-  graphNodes() {
+  // alias
+  get nodes() {
+    return this.graphNodes()
+  }
+
+  // alias
+  get edges() {
+    return this.graphEdges()
+  }
+
+  get graphNodes() {
     return this.graph.nodes()
   }
 
-  graphEdges() {
+  get graphEdges() {
     return this.graph.edges()
   }
 
-  get nodes() {
+  get docNodes() {
     return this.doc.nodes
   }
 
-  get edges() {
+  get docEdges() {
     return this.doc.edges
   }
-
 
   log(message: string, data?: any) {
     data ? this.logger.log(message, data) : this.logger.log(message)
