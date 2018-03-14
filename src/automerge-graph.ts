@@ -78,18 +78,31 @@ export class AutomergeGraph {
     throw new Error(message)
   }
 
-  getData(arg: any, value: any, method: string) {
+  validated(data: any, method: string): any {
+    function isInvalid(data: any, method: string): boolean {
+      return /Node$/.test(method) && !isStr(data.id)
+    }
+
+    function errMsg(id: any, method: string): string {
+      return id ? `${method}: Invalid node id` : `${method}: Missing node id`
+    }
+    return isInvalid(data, method) ? this.error(errMsg(data.id, method), data) : data
+  }
+
+  getData(arg: any, value: any, method?: string) {
+    method = String(method || value)
     if (isStr(arg)) {
       return { id: arg, value }
     }
     if (isObject(arg)) {
-      return arg
+      return this.validated(arg, method)
     }
-    this.error(`${method}: Invalid arguments ${arg}, ${value}`)
+    const msg = value ? `${method}: Invalid argument ${arg}` : `${method}: Invalid arguments ${arg}, ${value}`
+    this.error(msg)
   }
 
   createCommitter(action: any) {
-    createCommitter(this.doc, action, this.committerOpts)
+    return createCommitter(this.doc, action, this.committerOpts)
   }
 
   doAction(action: any, data?: any) {
