@@ -2,25 +2,52 @@ interface ILogger {
   log: Function
 }
 
-export function createDocMutator(options: any) {
+export function createDocMutator(options?: any) {
   return new DocMutator(options)
 }
 
-export function edgeId(edge: any) {
+export function edgeId(edge: any, error: Function) {
   const {
     directed,
     source,
     target
   } = edge
+  if (!source) {
+    return error('Missing source', {
+      edge
+    })
+  }
+  if (!target) {
+    return error('Missing target', {
+      edge
+    })
+  }
+
   return directed ? `${source}->${target}` : `${source}<->${target}`
 }
 
+interface IAffect {
+  affected?: any
+  added?: any
+  updated?: any
+  replaced?: any
+  removed?: any
+}
 
 export class DocMutator {
   logger: ILogger
+  last: {
+    node: IAffect,
+    edge: IAffect
+  }
 
   constructor(options: any = {}) {
     this.logger = options.logger || console
+    this.error = this.error.bind(this)
+    this.last = {
+      node: {},
+      edge: {}
+    }
   }
 
   log(message: string, data?: any) {
@@ -37,6 +64,40 @@ export class DocMutator {
     return this
   }
 
+  edgeId(edge: any) {
+    return edgeId(edge, this.error)
+  }
+
+  findNodeById(doc: any, id: string) {
+    return doc.nodes.find((node: any) => node.id === id)
+  }
+
+  findNodeIndexById(doc: any, id: string) {
+    return doc.nodes.findIndex((node: any) => node.id === id)
+  }
+
+  findEdgeById(doc: any, id: string) {
+    return doc.edges.find((edge: any) => edge.id === id)
+  }
+
+  errIfNodeNotFound(doc: any, id: string, message?: string) {
+    message = message || `Node not found in graph: ${id}`
+    const found = this.findNodeById(doc, id)
+    return found ? found : this.error(message)
+  }
+
+  errIfNodeIndexNotFound(doc: any, id: string, message?: string) {
+    message = message || `Node not found in graph: ${id}`
+    const index = this.findNodeIndexById(doc, id)
+    return index ? index : this.error(message)
+  }
+
+  errIfEdgeNotFound(doc: any, id: string, message?: string) {
+    message = message || `Edge not found in graph: ${id}`
+    const found = this.findEdgeById(doc, id)
+    return found ? found : this.error(message)
+  }
+
   addNode(doc: any, data: any) {
     const {
       id,
@@ -46,6 +107,8 @@ export class DocMutator {
       id
     })
     doc.nodes.push(node)
+    this.last.node.added = node
+    this.last.node.affected = node
     return this
   }
 
@@ -57,6 +120,9 @@ export class DocMutator {
     delete value.id
     const nodeToUpdate = this.findNodeById(doc, id)
     Object.assign(nodeToUpdate, value)
+
+    this.last.node.updated = nodeToUpdate
+    this.last.node.affected = nodeToUpdate
     return this
   }
 
@@ -68,8 +134,23 @@ export class DocMutator {
     delete value.id
     const index = this.findNodeIndexById(doc, id)
     doc.nodes[index] = value
+    const node = doc.nodes[index]
+    this.last.node.replaced = node
+    this.last.node.affected = node
     return this
   }
+
+  removeNode(doc: any, id: string) {
+    const index = this.errIfNodeIndexNotFound(doc, id, `Node to remove not found in graph: ${id}`)
+    // clone
+    const nodeToRemove = Object.assign({}, doc.nodes[index])
+    doc.nodes.splice(index, 1)
+    this.last.node.removed = nodeToRemove
+    this.last.node.affected = nodeToRemove
+    return this
+  }
+
+  // edge
 
   updateEdge(doc: any, data: any) {
     let {
@@ -102,45 +183,13 @@ export class DocMutator {
     }
     if (target) {
       this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
-      edgeToUpdate.target = target
+      this.last.edge = edgeToUpdate
     }
+    this.last.edge.updated = edgeToUpdate
+    this.last.edge.affected = edgeToUpdate
     return this
   }
 
-  edgeId(edge: any) {
-    return edgeId(edge)
-  }
-
-  findNodeById(doc: any, id: string) {
-    return doc.nodes.find((node: any) => node.id === id)
-  }
-
-  findNodeIndexById(doc: any, id: string) {
-    return doc.nodes.findIndex((node: any) => node.id === id)
-  }
-
-  findEdgeById(doc: any, id: string) {
-    return doc.edges.find((edge: any) => edge.id === id)
-  }
-
-  errIfNodeNotFound(doc: any, id: string, message?: string) {
-    message = message || `Node not found in graph: ${id}`
-    const found = this.findNodeById(doc, id)
-    return found ? found : this.error(message)
-  }
-
-  errIfEdgeNotFound(doc: any, id: string, message?: string) {
-    message = message || `Edge not found in graph: ${id}`
-    const found = this.findEdgeById(doc, id)
-    return found ? found : this.error(message)
-  }
-
-  removeNode(doc: any, id: string) {
-    if (!doc.nodes.find((node: any) => node.id === id)) {
-      this.error(`Node not found in graph: ${id}`)
-    }
-    return this
-  }
 
   removeEdge(doc: any, data: any) {
     let {
@@ -179,7 +228,13 @@ export class DocMutator {
     } else {
       edge = doc.edges.find((edge: any) => edge.source === source && edge.target === target)
     }
+    const edgeToRemove = Object.assign({}, edge)
+
+    this.last.edge.removed = edgeToRemove
+    this.last.edge.affected = edgeToRemove
+
     removeValueFromArray(doc.edges, edge)
+
     return this
   }
 
@@ -210,6 +265,10 @@ export class DocMutator {
     this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
 
     doc.edges.push(edge)
+
+    this.last.edge.added = edge
+    this.last.edge.affected = edge
+
     return this
   }
 }

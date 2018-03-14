@@ -4,7 +4,7 @@
 
 ## Disclaimer
 
-Entiely untested. Please try it out and report bugs or help write the test suite in [jest]()
+Please try it out and report bugs or help improve the test suite, written for use with [jest](https://facebook.github.io/jest/)
 
 ## Graphlib specification
 
@@ -126,7 +126,7 @@ In the future we might make it possible to queue up multiple actions that can be
 The graphlib API is available via `autoGraph.graph.toGraph`
 
 ```js
-autoGraph.graph.toGraph.nodes()
+autoGraph.graph.toGraph().nodes()
 ```
 
 A few delegation shorthands are currently available to get all `nodes` and `edges`.
@@ -179,7 +179,7 @@ See [Graphlib specs](https://github.com/dagrejs/graphlib/wiki)
 
 ## Author
 
-Kristian Mandrup
+[Kristian Mandrup](https://github.com/kristianmandrup)
 
 ## License
 

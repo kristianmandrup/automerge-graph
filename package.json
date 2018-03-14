@@ -10,6 +10,10 @@
     "automerge",
     "graph"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristianmandrup/automerge-graph.git"
+  },
   "author": "Kristian Mandrup <kmandrup@gmail.com>",
   "license": "MIT",
   "dependencies": {

@@ -4,7 +4,7 @@ import {
 
 import * as toGraph from 'graphlib-json-graph'
 
-export function createGraphDoc(options: any) {
+export function createGraphDoc(options?: any) {
   return new GraphDoc(options)
 }
 
@@ -36,16 +36,16 @@ export class GraphDoc {
     return this._g.graph
   }
 
-  get toGraph() {
+  toGraph() {
     return toGraph(this.g)
   }
 
   nodes() {
-    return this.toGraph.nodes()
+    return this.toGraph().nodes()
   }
 
   edges() {
-    return this.toGraph.edges()
+    return this.toGraph().edges()
   }
 
   merge(graph: any, into?: any) {
@@ -72,6 +72,8 @@ export class GraphDoc {
     this.mutator.removeNode(this.g, id)
     return this
   }
+
+  // edge API
 
   addEdge(data: any) {
     this.mutator.addEdge(this.g, data)

@@ -89,6 +89,12 @@ export class AutomergeGraph {
     return isInvalid(data, method) ? this.error(errMsg(data.id, method), data) : data
   }
 
+  validateStr(id: string, method: string) {
+    if (!isStr(id)) {
+      this.error(`${method}: ${id} must be a string`)
+    }
+  }
+
   getData(arg: any, value: any, method?: string) {
     method = String(method || value)
     if (isStr(arg)) {
@@ -129,7 +135,7 @@ export class AutomergeGraph {
     }, data)
   }
 
-  replaceNode(id: any, value: any) {
+  replaceNode(id: any, value?: any) {
     const data = this.getData(id, value, 'addNode')
     this.graph.replaceNode(data)
     return this.doAction({
@@ -138,6 +144,7 @@ export class AutomergeGraph {
   }
 
   removeNode(id: string) {
+    this.validateStr(id, 'removeNode')
     this.graph.removeNode(id)
     return this.doAction({
       name: 'removeNode',
@@ -163,6 +170,7 @@ export class AutomergeGraph {
   }
 
   removeEdge(id: string) {
+    this.validateStr(id, 'removeEdge')
     this.graph.updateEdge(id)
     return this.doAction({
       name: 'removeEdge',

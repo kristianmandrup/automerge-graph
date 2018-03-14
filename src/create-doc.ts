@@ -2,7 +2,7 @@ import {
   Automerge
 } from './_imports'
 
-export function createDoc(options: any) {
+export function createDoc(options: any = {}) {
   const {
     immutable
   } = options
