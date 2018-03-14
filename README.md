@@ -197,6 +197,81 @@ We will likely redesign this to make it easier to customize in a future release.
 - [Graphlib specs](https://github.com/dagrejs/graphlib/wiki)
 - [graphlib specification](https://github.com/jsongraph/json-graph-specification#graphs-object) and - - [JSON graph format](http://jsongraphformat.info/) specs.
 
+## Custom graph libs and key layouts
+
+The `DocMutator` (document mutation engine) has built-in support for `graphlib` and `ngraph` via pre-defined key layouts:
+
+```js
+const keyLayouts = {
+  graphlib: {
+    nodes: 'nodes',
+    edges: 'edges',
+    edge: {
+      source: 'source',
+      target: 'target'
+    }
+  },
+  ngraph: {
+    nodes: 'nodes',
+    edges: 'links',
+    edge: {
+      source: 'fromId',
+      target: 'toId'
+    }
+  }
+}
+```
+
+To support a custom graph lib, you can pass in a `layouts` option with your own maps and a `layout` option to point to the layout to use.
+
+```js
+options = {
+  layouts: {
+    myGraphLib: {
+      // keys
+    }
+  },
+  layout: 'myGraphLib'
+}
+```
+
+Alternatively directly pass a `keys` option with the keys layout to use.
+
+```js
+options = {
+  keys: {
+    nodes: '$nodes',
+    edges: '$edges',
+    edge: {
+      source: '$from',
+      target: '$to'
+    }
+  }
+}
+```
+
+This key layout assumes the following document structure:
+
+```js
+{
+  $nodes: [{
+    id: 'x',
+    // data
+  },
+  // more nodes
+  ],
+  $edges: [{
+    $from: 'x',
+    $to: 'y'
+  }
+  // more edges
+  ]
+}
+```
+
+More work is needed to suppport different node `data` vs `id` separation, edge `data` etc.
+Please help improve it :)
+
 ## Author
 
 [Kristian Mandrup](https://github.com/kristianmandrup)

@@ -68,7 +68,12 @@ const keyLayouts = {
     }
   },
   ngraph: {
-
+    nodes: 'nodes',
+    edges: 'links',
+    edge: {
+      source: 'fromId',
+      target: 'toId'
+    }
   }
 }
 
