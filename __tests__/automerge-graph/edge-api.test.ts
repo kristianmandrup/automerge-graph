@@ -1,12 +1,12 @@
 import {
-  createAutomergeGraph
+  createAutoGraph
 } from '../../src/automerge-graph'
 
 describe('AutomergeGraph', () => {
   describe('Edge API', () => {
     let autoGraph: any
     beforeEach(() => {
-      autoGraph = createAutomergeGraph()
+      autoGraph = createAutoGraph()
     })
 
     const id = 'x-y'

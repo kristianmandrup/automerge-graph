@@ -1,15 +1,13 @@
 import {
-  GraphDoc
-} from './graph-doc'
-import {
   createDoc
 } from './create-doc'
 import {
   createCommitter
 } from './committer'
 import * as isObject from 'isobject'
+import { createNGraphDoc, IGraph } from './adapters';
 
-export function createAutomergeGraph(options: any = {}) {
+export function createAutoGraph(options: any = {}) {
   return new AutomergeGraph(options)
 }
 
@@ -19,46 +17,30 @@ function isStr(value: any) {
 
 export class AutomergeGraph {
   label: string
-  graph: GraphDoc
   doc: any
   committerOpts: any
   options: any
   logger: any
+  graph: IGraph
 
   constructor(options: any = {}) {
     const {
-      label
+      label,
+      createGraph // pass your own graph factory
     } = options
     this.options = options
     this.label = label || 'autograph'
     this.doc = createDoc(options)
-    this.graph = new GraphDoc(options)
+    const customGraph = createGraph ? createGraph(options) : options.graph
+    this.graph = customGraph || this.createDefaultGraph(options)
     this.committerOpts = Object.assign(options, {
       initiator: this
     })
     this.logger = options.logger || console
   }
 
-  get g() {
-    return this.graph.g
-  }
-
-  // alias
-  get nodes() {
-    return this.graphNodes()
-  }
-
-  // alias
-  get edges() {
-    return this.graphEdges()
-  }
-
-  get graphNodes() {
-    return this.graph.nodes()
-  }
-
-  get graphEdges() {
-    return this.graph.edges()
+  createDefaultGraph(options: any = {}) {
+    return createNGraphDoc(options)
   }
 
   get docNodes() {

@@ -1,14 +1,13 @@
 import {
-  GraphDoc,
-  createGraphDoc
-} from '../../src/graph-doc'
+  createNGraphDoc
+} from '../../../src/adapters/ngraph'
 
 describe('GraphDoc', () => {
   describe('create', () => {
     describe('createGraphDoc', () => {
       let gdoc: any
       beforeEach(() => {
-        gdoc = createGraphDoc()
+        gdoc = createNGraphDoc()
       })
 
       const label = 'my graph'

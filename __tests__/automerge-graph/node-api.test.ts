@@ -1,4 +1,5 @@
 import {
+  createAutoGraph,
   AutomergeGraph
 } from '../../src/automerge-graph'
 
@@ -9,7 +10,7 @@ describe('AutomergeGraph', () => {
 
   let autoGraph: AutomergeGraph
   beforeEach(() => {
-    autoGraph = new AutomergeGraph(options)
+    autoGraph = createAutoGraph(options)
   })
 
 

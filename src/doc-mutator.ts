@@ -1,5 +1,20 @@
+function isStr(value: any) {
+  return typeof value === 'string'
+}
+
 interface ILogger {
   log: Function
+}
+
+interface IDocMutator {
+  addNode(doc: any, data: any): any
+  updateNode(doc: any, data: any): any
+  replaceNode(doc: any, data: any): any
+  removeNode(doc: any, id: string): any
+
+  addEdge(doc: any, data: any): any
+  updateEdge(doc: any, data: any): any
+  removeEdge(doc: any, id: string): any
 }
 
 export function createDocMutator(options?: any) {
@@ -34,6 +49,29 @@ interface IAffect {
   removed?: any
 }
 
+interface IGraphKeys {
+  nodes: string
+  edges: string
+  edge: {
+    source: string,
+    target: string
+  }
+}
+
+const keyLayouts = {
+  graphlib: {
+    nodes: 'nodes',
+    edges: 'edges',
+    edge: {
+      source: 'source',
+      target: 'target'
+    }
+  },
+  ngraph: {
+
+  }
+}
+
 export class DocMutator {
   logger: ILogger
   last: {
@@ -41,27 +79,67 @@ export class DocMutator {
     edge: IAffect
   }
 
+  keys: IGraphKeys
+
+  layouts: any = {
+    ...keyLayouts,
+    default: keyLayouts.ngraph
+  }
+
+  /**
+   *
+   * @param options
+   */
   constructor(options: any = {}) {
     this.logger = options.logger || console
     this.error = this.error.bind(this)
+    if (options.layouts) {
+      this.layouts = Object.assign(this.layouts, options.layouts || {})
+    }
+
+    this.keys = options.keys || this.layouts[options.layout] || this.layouts.default
     this.last = {
       node: {},
       edge: {}
     }
   }
 
+  /**
+   *
+   * @param message
+   * @param data
+   */
   log(message: string, data?: any) {
     data ? this.logger.log(message, data) : this.logger.log(message)
   }
 
+  /**
+   *
+   * @param message
+   * @param data
+   */
   error(message: string, data?: any) {
     this.log(message, data)
     throw new Error(message)
   }
 
+  /**
+   *
+   * @param doc
+   * @param data
+   */
   merge(doc: any, data: any) {
     Object.assign(doc, data)
     return this
+  }
+
+  /**
+   *
+   * @param id
+   * @param method
+   */
+  validateId(id: string, method: string) {
+    if (!isStr(id)) this.error('${method}: invalid source id', { id })
   }
 
   edgeId(edge: any) {
@@ -69,15 +147,18 @@ export class DocMutator {
   }
 
   findNodeById(doc: any, id: string) {
-    return doc.nodes.find((node: any) => node.id === id)
+    const nodes = this.nodesOf(doc)
+    return nodes.find((node: any) => node.id === id)
   }
 
   findNodeIndexById(doc: any, id: string) {
-    return doc.nodes.findIndex((node: any) => node.id === id)
+    const nodes = this.nodesOf(doc)
+    return nodes.findIndex((node: any) => node.id === id)
   }
 
   findEdgeById(doc: any, id: string) {
-    return doc.edges.find((edge: any) => edge.id === id)
+    const edges = this.edgesOf(doc)
+    return edges.find((edge: any) => edge.id === id)
   }
 
   errIfNodeNotFound(doc: any, id: string, message?: string) {
@@ -98,6 +179,19 @@ export class DocMutator {
     return found ? found : this.error(message)
   }
 
+  nodesOf(doc: any) {
+    return doc[this.keys.nodes]
+  }
+
+  edgesOf(doc: any) {
+    return doc[this.keys.edges]
+  }
+
+  /**
+   * Adds a node to document
+   * @param doc
+   * @param data
+   */
   addNode(doc: any, data: any) {
     const {
       id,
@@ -106,7 +200,8 @@ export class DocMutator {
     const node = Object.assign(value, {
       id
     })
-    doc.nodes.push(node)
+    const nodes = this.nodesOf(doc)
+    nodes.push(node)
     this.last.node.added = node
     this.last.node.affected = node
     return this
@@ -133,8 +228,9 @@ export class DocMutator {
     } = data
     delete value.id
     const index = this.findNodeIndexById(doc, id)
-    doc.nodes[index] = value
-    const node = doc.nodes[index]
+    const nodes = this.nodesOf(doc)
+    nodes[index] = value
+    const node = nodes[index]
     this.last.node.replaced = node
     this.last.node.affected = node
     return this
@@ -143,14 +239,35 @@ export class DocMutator {
   removeNode(doc: any, id: string) {
     const index = this.errIfNodeIndexNotFound(doc, id, `Node to remove not found in graph: ${id}`)
     // clone
-    const nodeToRemove = Object.assign({}, doc.nodes[index])
-    doc.nodes.splice(index, 1)
+    const nodes = this.nodesOf(doc)
+    const nodeToRemove = Object.assign({}, nodes[index])
+
+    nodes.splice(index, 1)
     this.last.node.removed = nodeToRemove
     this.last.node.affected = nodeToRemove
     return this
   }
 
   // edge
+
+  setEdge(edge: any, options: { source: string, target: string }) {
+    const {
+      source,
+      target
+    } = options
+    this.setEdgeSource(edge, source)
+    this.setEdgeTarget(edge, target)
+  }
+
+  setEdgeSource(edge: any, id: string) {
+    this.validateId(id, 'setEdgeSource')
+    edge[this.keys.edge.source] = id
+  }
+
+  setEdgeTarget(edge: any, id: string) {
+    this.validateId(id, 'setEdgeTarget')
+    edge[this.keys.edge.target] = id
+  }
 
   updateEdge(doc: any, data: any) {
     let {
@@ -170,7 +287,7 @@ export class DocMutator {
     }
 
     if (!source && !target) {
-      this.error('updateEdge: missing source or target of update to make to edge ${id}', {
+      this.error(`updateEdge: missing source or target of update to make to edge ${id}`, {
         data
       })
     }
@@ -179,11 +296,11 @@ export class DocMutator {
 
     if (source) {
       this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
-      edgeToUpdate.source = source
+      this.setEdgeSource(edgeToUpdate, source)
     }
     if (target) {
       this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
-      this.last.edge = edgeToUpdate
+      this.setEdgeSource(edgeToUpdate, target)
     }
     this.last.edge.updated = edgeToUpdate
     this.last.edge.affected = edgeToUpdate
@@ -226,7 +343,11 @@ export class DocMutator {
     if (id) {
       edge = doc.edges.find((edge: any) => edge.id === id)
     } else {
-      edge = doc.edges.find((edge: any) => edge.source === source && edge.target === target)
+      const keys = {
+        source: this.keys.edge.source,
+        target: this.keys.edge.target
+      }
+      edge = doc.edges.find((edge: any) => edge[keys.source] === source && edge[keys.target] === target)
     }
     const edgeToRemove = Object.assign({}, edge)
 
@@ -264,7 +385,9 @@ export class DocMutator {
     this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
     this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
 
-    doc.edges.push(edge)
+    const edges = this.edgesOf(doc)
+    const edgeToAdd = this.setEdge({}, { source, target })
+    edges.push(edgeToAdd)
 
     this.last.edge.added = edge
     this.last.edge.affected = edge

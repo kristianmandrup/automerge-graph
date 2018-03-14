@@ -12,41 +12,41 @@ describe('AutomergeGraph', () => {
   })
 
 
-  describe('g', () => {
-    it('returns the graph definition', () => {
-      expect(autoGraph.g).toEqual({
-        label: 'x',
-        nodes: [],
-        edges: [],
-      })
-    })
-  })
+  // describe('g', () => {
+  //   it('returns the graph definition', () => {
+  //     expect(autoGraph.g).toEqual({
+  //       label: 'x',
+  //       nodes: [],
+  //       edges: [],
+  //     })
+  //   })
+  // })
 
-  describe('graphNodes', () => {
-    it('returns the graphlib nodes', () => {
-      expect(autoGraph.graphNodes()).toBeDefined()
-    })
-  })
+  // describe('graphNodes', () => {
+  //   it('returns the graphlib nodes', () => {
+  //     expect(autoGraph.graphNodes()).toBeDefined()
+  //   })
+  // })
 
-  describe('graphEdges', () => {
-    it('returns the graphlib edges', () => {
-      expect(autoGraph.graphEdges).toBeDefined()
-    })
-  })
-
-
-  describe('docNodes', () => {
-    it('returns the doc edges', () => {
-      expect(autoGraph.docNodes).toBeDefined()
-    })
-  })
+  // describe('graphEdges', () => {
+  //   it('returns the graphlib edges', () => {
+  //     expect(autoGraph.graphEdges).toBeDefined()
+  //   })
+  // })
 
 
-  describe('docEdges', () => {
-    it('returns the doc edges', () => {
-      expect(autoGraph.docEdges).toBeDefined()
-    })
-  })
+  // describe('docNodes', () => {
+  //   it('returns the doc edges', () => {
+  //     expect(autoGraph.docNodes).toBeDefined()
+  //   })
+  // })
+
+
+  // describe('docEdges', () => {
+  //   it('returns the doc edges', () => {
+  //     expect(autoGraph.docEdges).toBeDefined()
+  //   })
+  // })
 
   describe('validated', () => {
     it('does not validate data object on non xxNode method', () => {

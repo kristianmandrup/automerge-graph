@@ -1,34 +1,42 @@
 import {
   DocMutator,
-} from './doc-mutator'
+} from '../../doc-mutator'
 
-import * as toGraph from 'graphlib-json-graph'
+export interface IGraph {
+  addNode(data: any): IGraph
+  updateNode(data: any): IGraph
+  replaceNode(data: any): IGraph
+  removeNode(id: string): IGraph
 
-export function createGraphDoc(options?: any) {
-  return new GraphDoc(options)
+  // edge API
+
+  addEdge(data: any): IGraph
+  updateEdge(data: any): IGraph
+  removeEdge(id: string): IGraph
 }
 
-export class GraphDoc {
+export abstract class BaseGraph {
   label: string
   _g: any = {}
-  mutator: DocMutator
+  mutator: any
 
   constructor(options: any = {}) {
     const {
       label
     } = options
-    this.mutator = new DocMutator(options)
+    this.mutator = options.mutator || this.createMutator(options)
     this.label = label || 'Automerge Graph'
     this.merge(this.initialGraph, this._g)
   }
 
+  createMutator(options: any) {
+    return new DocMutator(options)
+  }
+
   get initialGraph() {
     return {
-      graph: {
-        label: this.label,
-        nodes: [],
-        edges: []
-      }
+      // keep set of changes made, one per mutator action
+      changes: []
     }
   }
 
@@ -37,15 +45,17 @@ export class GraphDoc {
   }
 
   toGraph() {
-    return toGraph(this.g)
+    throw new Error('toGraph: Not yet implemented')
   }
 
   nodes() {
-    return this.toGraph().nodes()
+    throw new Error('nodes: Not yet implemented')
+    // return []
   }
 
   edges() {
-    return this.toGraph().edges()
+    throw new Error('edges: Not yet implemented')
+    // return []
   }
 
   merge(graph: any, into?: any) {

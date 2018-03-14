@@ -1,16 +1,34 @@
 # Automerge graph
 
-[automerge](https://github.com/automerge/automerge) for graphs, using [graphlib](https://github.com/dagrejs/graphlib) via [graphlib-json-graph](https://github.com/jsongraph/graphlib-json-graph)
+[automerge](https://github.com/automerge/automerge) for graphs.
+
+Basic support for generic graph libs, including:
+
+- [graphlib](https://github.com/dagrejs/graphlib) via [graphlib-json-graph](https://github.com/jsongraph/graphlib-json-graph)
+- [ngraph](https://github.com/anvaka/ngraph.graph)
+
+You should be able to support most graph libs, simply by adding a key layout specific to that graph engine. By default, `AutomergeGraph` will use `NGraph`.
 
 ## Disclaimer
 
 Please try it out and report bugs or help improve the test suite, written for use with [jest](https://facebook.github.io/jest/)
 
-## Graphlib specification
-
-See the [graphlib specification](https://github.com/jsongraph/json-graph-specification#graphs-object) and [JSON graph format](http://jsongraphformat.info/) specs.
-
 ## API
+
+### Node API
+
+- `addNode`
+- `updateNode`
+- `replaceNode`
+- `removeNode`
+
+### Edge API
+
+- `addEdge`
+- `updateEdge`
+- `removeEdge`
+
+## API usage example
 
 ```js
 import {
@@ -65,6 +83,10 @@ const autoGraph = createAutomergeGraph({
 
 Each of these actions will result in an `automerge` commit
 
+## Auto-message
+
+The API also supports an option to use auto commit messaging...
+
 ```js
 const autoGraph = createAutomergeGraph({
     immutable: true,
@@ -92,24 +114,32 @@ const autoGraph = createAutomergeGraph({
 // The other peers should see these commit messages as their underlying graph is updated
 ```
 
-A user on anoter peer node (such as via [MPL](https://github.com/automerge/mpl)) can then receive automerge graph updates as JSON updates, that can be re-assembled back into a graphlib via [graphlib-json-graph]((https://github.com/jsongraph/graphlib-json-graph))
+You can also pass an `autoCommit` option to automatically commit each action with the auto generated message.
 
-The foreign peer user should be able to further make updates to the unerlying automerge document via the same AutoGraph API:
+## Hydration on remote peer
+
+A user on another peer node (f.ex via [MPL](https://github.com/automerge/mpl)) can receive automerge graph updates as JSON updates. These updates can be re-materialized (also known as *hydrated* in front-end speak) back into a graph in memory.
+
+- [graphlib-json-graph]((https://github.com/jsongraph/graphlib-json-graph))
+- [ngraph.fromjson](https://github.com/anvaka/ngraph.fromjson)
+
+The remote peer user can make updates to the underlying automerge document via the same AutoGraph API, in this example using the `autoCommit` feature.
 
 ```js
 // remote peer graph updates (on automerge doc)
+const autoGraph = createAutoGraph({
+  autoCommit: true
+})
+
 autoGraph
   .updateNode('person:javier', {
     job: 'web developer'
   })
-  .commit()
-
   .replaceNode('person:javier', {
     name: 'javier',
     age: 36
     // will implicitly delete the job key since not part of the new node
   })
-  .commit()
 
 // Will commit using the following auto-generated messages
 
@@ -120,25 +150,6 @@ autoGraph
 ```
 
 In the future we might make it possible to queue up multiple actions that can be commited as a batch of actions on a document.
-
-## Graphlib API gateway
-
-The graphlib API is available via `autoGraph.graph.toGraph`
-
-```js
-autoGraph.graph.toGraph().nodes()
-```
-
-A few delegation shorthands are currently available to get all `nodes` and `edges`.
-Currently these methods are performed lazily, ie. only when called.
-
-```js
-autoGraph.graph.nodes()
-// ...
-autoGraph.graph.edges()
-```
-
-We will likely set up a more convenient mode/setting to re-generate the graph on each action (JSON update).
 
 ## Customized messages
 
@@ -173,9 +184,18 @@ You should then subclass and override the `createCommitter(action)` method of `A
 
 We will likely redesign this to make it easier to customize in a future release. Let us know if this is a high priority.
 
+## NGraph
+
+- [ngraph](https://github.com/anvaka?utf8=%E2%9C%93&tab=repositories&q=ngraph&type=&language=)
+- [ngraph.graph](https://github.com/anvaka/ngraph.graph)
+- [ngraph.path](https://github.com/anvaka/ngraph.path)
+- [ngraph.tojson](https://github.com/anvaka/ngraph.tojson)
+- [ngraph.fromjson](https://github.com/anvaka/ngraph.fromjson)
+
 ## Graphlib
 
-See [Graphlib specs](https://github.com/dagrejs/graphlib/wiki)
+- [Graphlib specs](https://github.com/dagrejs/graphlib/wiki)
+- [graphlib specification](https://github.com/jsongraph/json-graph-specification#graphs-object) and - - [JSON graph format](http://jsongraphformat.info/) specs.
 
 ## Author
 

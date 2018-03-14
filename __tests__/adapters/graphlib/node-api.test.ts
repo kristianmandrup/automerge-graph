@@ -1,6 +1,6 @@
 import {
-  createGraphDoc
-} from '../../src/graph-doc'
+  createGraphlibDoc
+} from '../../../src/adapters/graphlib'
 
 function clone(obj: object) {
   return Object.assign({}, obj)
@@ -37,7 +37,7 @@ describe('GraphDoc', () => {
 
     let gdoc: any
     beforeEach(() => {
-      gdoc = createGraphDoc()
+      gdoc = createGraphlibDoc()
     })
 
     describe('addNode', () => {

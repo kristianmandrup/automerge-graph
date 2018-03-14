@@ -1,6 +1,6 @@
 import {
-  createGraphDoc
-} from '../../src/graph-doc'
+  createNGraphDoc
+} from '../../../src/adapters/ngraph'
 
 function clone(obj: object) {
   return Object.assign({}, obj)
@@ -20,7 +20,7 @@ describe('GraphDoc', () => {
 
     let gdoc: any
     beforeEach(() => {
-      gdoc = createGraphDoc()
+      gdoc = createNGraphDoc()
     })
 
     describe('addEdge', () => {

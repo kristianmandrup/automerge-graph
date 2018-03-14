@@ -1,5 +1,5 @@
 import {
-  createAutomergeGraph,
+  createAutoGraph,
   AutomergeGraph
 } from '../../src/automerge-graph'
 
@@ -7,7 +7,7 @@ describe('AutomergeGraph', () => {
   describe('create', () => {
     describe('createAutomergeGraph', () => {
       it('creates instance', () => {
-        const autoGraph = createAutomergeGraph()
+        const autoGraph = createAutoGraph()
         expect(autoGraph).toBeDefined()
       })
     })
