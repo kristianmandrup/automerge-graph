@@ -32,6 +32,22 @@ describe('AutomergeGraph', () => {
         expect(act).toBeDefined()
       })
     })
+    describe('auto-generated id', () => {
+      beforeEach(() => {
+        autoGraph.enable.autoId = true
+      })
+
+      afterEach(() => {
+        autoGraph.enable.autoId = false
+      })
+
+      it('creates a node', () => {
+
+        const act = autoGraph.addNode({ value })
+        expect(act).toBeDefined()
+      })
+    })
+
     describe('invalid data obj arg', () => {
       it('throws', () => {
         const doAct = () => autoGraph.addNode({ value })
@@ -59,6 +75,23 @@ describe('AutomergeGraph', () => {
         expect(act).toBeDefined()
       })
     })
+
+    describe('auto-generated id', () => {
+      beforeEach(() => {
+        autoGraph.enable.autoId = true
+      })
+
+      afterEach(() => {
+        autoGraph.enable.autoId = false
+      })
+
+      it('updates a node', () => {
+
+        const act = autoGraph.updateNode({ value })
+        expect(act).toBeDefined()
+      })
+    })
+
     describe('invalid data obj arg', () => {
       it('throws', () => {
         const doAct = () => autoGraph.updateNode({ value })
@@ -84,6 +117,22 @@ describe('AutomergeGraph', () => {
     describe('data obj arg', () => {
       it('replaces a node', () => {
         const act = autoGraph.replaceNode({ id, value })
+        expect(act).toBeDefined()
+      })
+    })
+
+    describe('auto-generated id', () => {
+      beforeEach(() => {
+        autoGraph.enable.autoId = true
+      })
+
+      afterEach(() => {
+        autoGraph.enable.autoId = false
+      })
+
+      it('replaces a node', () => {
+
+        const act = autoGraph.replaceNode({ value })
         expect(act).toBeDefined()
       })
     })

@@ -44,13 +44,5 @@ export class NGraphDoc extends BaseGraph {
   toGraph() {
     return fromJson(this.g)
   }
-
-  nodes() {
-    return this.toGraph().nodes()
-  }
-
-  edges() {
-    return this.toGraph().edges()
-  }
 }
 
