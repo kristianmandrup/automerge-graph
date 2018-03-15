@@ -1,6 +1,6 @@
 import {
-  createDocMutator
-} from '../../src/doc-mutator'
+  createGraphDocMutator
+} from '../../src/graph-doc-mutator'
 
 function clone(obj: object) {
   return Object.assign({}, obj)
@@ -21,13 +21,13 @@ function create(id: string, data: any = {}) {
   }
 }
 
-describe('DocMutator', () => {
+describe('GraphDocMutator', () => {
   describe('Edge API', () => {
     let mutator: any
     let doc: any
     beforeEach(() => {
       doc = new Object({})
-      mutator = createDocMutator()
+      mutator = createGraphDocMutator()
     })
 
     const id = 'x-y'

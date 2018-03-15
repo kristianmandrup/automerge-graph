@@ -251,7 +251,8 @@ export class AutomergeGraph {
    * Remove a node from the graph and commit action
    * @param id
    */
-  removeNode(id: string) {
+  removeNode(idArg: any) {
+    let id = isStr(idArg) ? String(idArg) : String(idArg.id)
     id = this.validateAndFormatId(id, 'removeNode')
     this.graph.removeNode(id)
     return this.doAction({
@@ -291,7 +292,8 @@ export class AutomergeGraph {
    * Remove an edge from the graph and commit action
    * @param id
    */
-  removeEdge(id: string) {
+  removeEdge(idArg: any) {
+    let id = isStr(idArg) ? String(idArg) : String(idArg.id)
     id = this.validateAndFormatId(id, 'removeEdge')
     this.graph.updateEdge(id)
     return this.doAction({

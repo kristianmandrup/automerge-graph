@@ -17,8 +17,8 @@ interface IDocMutator {
   removeEdge(doc: any, id: string): any
 }
 
-export function createDocMutator(options?: any) {
-  return new DocMutator(options)
+export function createGraphDocMutator(options?: any) {
+  return new GraphDocMutator(options)
 }
 
 export function edgeId(edge: any, error: Function) {
@@ -99,7 +99,7 @@ interface IGraphSupport {
   directed: boolean
 }
 
-export class DocMutator {
+export class GraphDocMutator {
   support: IGraphSupport = {
     edgeData: false,
     directed: true

@@ -1,6 +1,6 @@
 import {
-  createDocMutator
-} from '../../src/doc-mutator'
+  createGraphDocMutator
+} from '../../src/graph-doc-mutator'
 
 function clone(obj: object) {
   return Object.assign({}, obj)
@@ -11,7 +11,7 @@ describe('DocMutator', () => {
     let doc: any
     beforeEach(() => {
       doc = new Object({})
-      mutator = createDocMutator()
+      mutator = createGraphDocMutator()
     })
 
     function create(id: string, value: any) {

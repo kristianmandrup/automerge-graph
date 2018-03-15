@@ -1,7 +1,7 @@
 import {
   edgeId,
-  createDocMutator
-} from '../../src/doc-mutator'
+  createGraphDocMutator
+} from '../../src/graph-doc-mutator'
 
 describe('edgeId', () => {
   function error(msg: string, data?: any) {
@@ -43,7 +43,7 @@ describe('DocMutator', () => {
     let doc: any
     beforeEach(() => {
       doc = new Object({})
-      mutator = createDocMutator()
+      mutator = createGraphDocMutator()
     })
 
     describe('merge', () => {

@@ -1,6 +1,7 @@
 import {
-  DocMutator,
-} from '../../doc-mutator'
+  // GraphDocMutator,
+  createGraphDocMutator
+} from '../../graph-doc-mutator'
 
 export interface IGraph {
   addNode(data: any): IGraph
@@ -37,7 +38,7 @@ export abstract class BaseGraph {
   }
 
   createMutator(options: any) {
-    return new DocMutator(options)
+    return createGraphDocMutator(options)
   }
 
   get initialGraph() {

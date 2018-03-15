@@ -44,7 +44,9 @@ const autoGraph = createAutomergeGraph({
   })
   .commit('add node: kristian')
 
-  .addNode('person:javier', {
+  // alternatively pass all args in single object arg
+  .addNode({
+    id: 'person:javier',
     name: 'javier',
     age: 35
   })
@@ -74,10 +76,13 @@ const autoGraph = createAutomergeGraph({
   .removeEdge(friendsId)
   .commit('remove edge: kristian -> javier')
 
-  .removeNode('person:javier')
+  // alternatively remove via object arg
+  .removeNode({id: 'person:javier'})
   .commit('remove node: javier')
 
-  .removeNode('person:kristian')
+  // since krisNode contains the id: 'person:kristian'
+  // super convenient!
+  .removeNode(krisNode)
   .commit('remove node: kristian')
 ```
 

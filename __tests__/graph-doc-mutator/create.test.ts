@@ -1,20 +1,20 @@
 import {
-  DocMutator,
-  createDocMutator
-} from '../../src/doc-mutator'
+  GraphDocMutator,
+  createGraphDocMutator
+} from '../../src/graph-doc-mutator'
 
 describe('DocMutator', () => {
   describe('create', () => {
-    describe('createDocMutator', () => {
+    describe('createrGraphDocMutator', () => {
       it('creates instance', () => {
-        const mutator = createDocMutator()
+        const mutator = createGraphDocMutator()
         expect(mutator).toBeDefined()
       })
     })
 
     describe('construct', () => {
       it('creates instance', () => {
-        const mutator = new DocMutator()
+        const mutator = new GraphDocMutator()
         expect(mutator).toBeDefined()
         expect(mutator.logger).toBeDefined()
       })

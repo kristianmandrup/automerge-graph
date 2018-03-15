@@ -1,13 +1,13 @@
 export {
   AutomergeGraph,
-  createAutomergeGraph
+  createAutoGraph
 } from './automerge-graph'
 
 export {
   DocMutator,
   createDocMutator,
   edgeId
-} from './doc-mutator'
+} from './graph-doc-mutator'
 
 export {
   Committer,
@@ -15,6 +15,9 @@ export {
 } from './committer'
 
 export {
-  GraphDoc,
-  createGraphDoc
-} from './graph-doc'
+  GraphlibDoc,
+  createGraphlibDoc,
+  NGraphDoc,
+  createNGraphDoc,
+  IGraph
+} from './adapters'

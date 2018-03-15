@@ -1,9 +1,11 @@
 export {
+  NGraphDoc,
   createNGraphDoc
 } from './ngraph'
 
 export {
-  GraphlibDoc
+  GraphlibDoc,
+  createGraphlibDoc
 } from './graphlib'
 
 export {
