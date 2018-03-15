@@ -242,9 +242,15 @@ options = {
   keys: {
     nodes: '$nodes',
     edges: '$edges',
+    node: {
+      id: '$id'
+      data: '$data'
+    },
     edge: {
+      id: '$id',
       source: '$from',
-      target: '$to'
+      target: '$to',
+      data: '$data'
     }
   }
 }
@@ -255,22 +261,26 @@ This key layout assumes the following document structure:
 ```js
 {
   $nodes: [{
-    id: 'x',
-    // data
+    $id: 'x',
+    $data: {
+      // node data
+    }
   },
   // more nodes
   ],
   $edges: [{
     $from: 'x',
-    $to: 'y'
+    $to: 'y',
+    $data: {
+      // edge data
+    }
   }
   // more edges
   ]
 }
 ```
 
-More work is needed to suppport different node `data` vs `id` separation, edge `data` etc.
-Please help improve it :)
+Note: If you leave out assigning a `data` key, data will be merged with the node or edge in question and not reside under a special key. This merge strategy is used by *graphlib*.
 
 ## Author
 

@@ -19,8 +19,15 @@ export abstract class BaseGraph {
   label: string
   _g: any = {}
   mutator: any
+  options: any
 
   constructor(options: any = {}) {
+    this.init(options)
+  }
+
+  init(options: any = {}) {
+    if (options === this.options) return
+    this.options = options
     const {
       label
     } = options

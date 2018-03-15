@@ -1,3 +1,4 @@
+import * as deepmerge from 'deepmerge'
 import {
   BaseGraph
 } from '../base'
@@ -11,8 +12,22 @@ export function createNGraphDoc(options?: any) {
 
 export class NGraphDoc extends BaseGraph {
   constructor(options: any = {}) {
-    options.layout = 'ngraph'
-    super(options)
+    super()
+    this.init(this.createOptions(options))
+  }
+
+  createOptions(opts: any) {
+    return deepmerge(opts, this.options)
+  }
+
+  get options() {
+    return {
+      layout: 'ngraph',
+      support: {
+        directed: true,
+        edgeData: true
+      }
+    }
   }
 
   get initialGraph() {
