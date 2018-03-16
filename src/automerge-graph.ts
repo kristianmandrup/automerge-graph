@@ -2,7 +2,7 @@ import {
   createDoc
 } from './create-doc'
 import {
-  createCommitter
+  createCommitter, Committer
 } from './committer'
 import * as isObject from 'isobject'
 import { createNGraphDoc, IGraph } from './adapters';
@@ -27,6 +27,9 @@ export class AutomergeGraph {
   enable: {
     autoId: boolean
   }
+  commitHistory: any[]
+  committer: Committer
+  autoCommit: boolean = false
 
   constructor(options: any = {}) {
     const {
@@ -204,8 +207,15 @@ export class AutomergeGraph {
    */
   doAction(action: any, data: any = {}) {
     action = this.createAction(data, action)
-    this.createCommitter(action)
+    this.committer = this.createCommitter(action)
+    if (this.autoCommit) {
+      this.commit()
+    }
     return this
+  }
+
+  commit(message?: string) {
+    this.committer.commit(message)
   }
 
   /**
