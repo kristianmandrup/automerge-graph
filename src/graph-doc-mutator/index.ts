@@ -1,123 +1,38 @@
 import {
-  INotifier,
-  Notifier
-} from './notifier'
+  NodeMutator
+} from './node-mutator'
+import {
+  EdgeMutator
+} from './edge-mutator'
 
-function isStr(value: any) {
-  return typeof value === 'string'
-}
-
-/**
- * The main API that any GraphDocMutator must implement
- */
-export interface IGraphDocMutator {
-  addNode(doc: any, data: any): any
-  updateNode(doc: any, data: any): any
-  replaceNode(doc: any, data: any): any
-  removeNode(doc: any, id: string): any
-
-  addEdge(doc: any, data: any): any
-  updateEdge(doc: any, data: any): any
-  removeEdge(doc: any, id: string): any
-}
+export {
+  IGraphDocMutator
+} from './interfaces'
 
 export function createGraphDocMutator(options?: any) {
   return new GraphDocMutator(options)
 }
 
-/**
- * Function to calculate new edge ID based on edge properties
- * @param edge
- * @param error
- */
-export function edgeId(edge: any, error: Function) {
-  const {
-    directed,
-    source,
-    target
-  } = edge
-  if (!source) {
-    return error('Missing source', {
-      edge
-    })
-  }
-  if (!target) {
-    return error('Missing target', {
-      edge
-    })
-  }
+import {
+  IAffect,
+  IGraphKeys,
+  IGraphSupport,
+  IGraphDocMutator,
+  INodeMutator,
+  IEdgeMutator
+} from './interfaces'
 
-  return directed ? `${source}->${target}` : `${source}<->${target}`
-}
+import {
+  cleanStrategy,
+} from './utils'
 
-/**
- * Default clean strategy, removes all but the last item
- * @param items
- */
-function cleanStrategy(items: any[]) {
-  return items.slice(-1)
-}
+import {
+  keyLayouts
+} from './key-layouts'
+import { Mutator } from './mutator';
 
 const defaults = {
   cleanStrategy
-}
-
-interface IAffect {
-  affected?: any
-  added?: any
-  updated?: any
-  replaced?: any
-  removed?: any
-}
-
-interface IGraphKeys {
-  nodes: string
-  edges: string
-  node: {
-    id: string,
-    data?: string
-  },
-  edge: {
-    id: string,
-    directed: string,
-    source: string,
-    target: string,
-    data?: string
-  }
-}
-
-const keyLayouts = {
-  graphlib: {
-    nodes: 'nodes',
-    edges: 'edges',
-    node: {
-      id: 'id'
-    },
-    edge: {
-      id: 'id',
-      source: 'source',
-      target: 'target',
-    }
-  },
-  ngraph: {
-    nodes: 'nodes',
-    edges: 'links',
-    node: {
-      id: 'id',
-      data: 'data'
-    },
-    edge: {
-      id: 'id',
-      source: 'fromId',
-      target: 'toId',
-      data: 'data'
-    }
-  }
-}
-
-interface IGraphSupport {
-  edgeData: boolean
-  directed: boolean
 }
 
 /**
@@ -125,7 +40,7 @@ interface IGraphSupport {
  * Generic mutator to mutate the underlying (flat) data structure of a graph
  * Assumes nodes and edges are grouped into (separate) lists
  */
-export class GraphDocMutator {
+export class GraphDocMutator extends Mutator implements IGraphDocMutator {
   support: IGraphSupport = {
     edgeData: false,
     directed: true
@@ -143,15 +58,26 @@ export class GraphDocMutator {
     default: keyLayouts.ngraph
   }
 
-  notifier: INotifier
+  nodeMutator: INodeMutator
+  edgeMutator: IEdgeMutator
 
   /**
    * Create the GraphDocMutator with some options
    * @param options
    */
   constructor(options: any = {}) {
+    super(options)
+    let {
+      createNodeMutator,
+      createEdgeMutator
+    } = options
+    createNodeMutator = createNodeMutator || this.createNodeMutator
+    createEdgeMutator = createEdgeMutator || this.createEdgeMutator
+
     this.support = options.support || this.support
-    this.notifier = this.createNotifier(options)
+
+    this.nodeMutator = createNodeMutator(options)
+    this.edgeMutator = createEdgeMutator(options)
     if (options.layouts) {
       this.layouts = Object.assign(this.layouts, options.layouts || {})
     }
@@ -161,26 +87,23 @@ export class GraphDocMutator {
       node: {},
       edge: {}
     }
+    this.init(this)
   }
 
   /**
-   * Factory to create notifier
+   * Factory to create NodeMutator
    * @param options
    */
-  createNotifier(options: any) {
-    return new Notifier(options)
+  createNodeMutator(options: any) {
+    return new NodeMutator(options)
   }
 
-  log(msg: string, data?: any) {
-    this.notifier.log(msg, data)
-  }
-
-  warn(msg: string, data?: any) {
-    this.notifier.warn(msg, data)
-  }
-
-  error(msg: string, data?: any) {
-    this.notifier.error(msg, data)
+  /**
+   * Factory to create NodeMutator
+   * @param options
+   */
+  createEdgeMutator(options: any) {
+    return new EdgeMutator(options)
   }
 
   /**
@@ -217,386 +140,21 @@ export class GraphDocMutator {
   }
 
   /**
-   * Group edges by ID.
-   * Can be used to detect if multiple instances of same edge after sync
-   * @param doc
-   */
-  groupEdgesById(doc: any) {
-    this.groupById(doc, this.edgesOf(doc), 'edge')
-  }
-
-  /**
-   * Detect type of object, either edge or node
-   * @param item
-   */
-  detectType(item: any) {
-    const sameIdKey = this.keys.edge.id === this.keys.node.id
-
-    const edgeKeys = Object.keys(this.keys.edge).filter(key => !(key === 'id' && sameIdKey))
-    return edgeKeys.find(key => item[key]) ? 'edge' : 'node'
-  }
-
-  /**
-   * Get ID of an edge or node
-   * @param item
-   * @param type
-   */
-  getId(item: any, type?: string) {
-    type = type ? type : this.detectType(item)
-    const idKey = this.keys[type].id
-    return item[idKey]
-  }
-
-  /**
-   * Get IDs of collection (nodes or edges)
-   * @param doc
-   * @param collection
-   * @param type
-   */
-  collectionIds(doc: any, collection: any, type?: string) {
-    return collection.map((item: any) => {
-      return this.getId(item, type)
-    })
-  }
-
-
-  /**
-   * Group a collection of nodes or edges by ID in order to determine duplicates
-   * @param doc
-   * @param collection
-   * @param type
-   */
-  groupById(doc: any, collection: any, type?: string) {
-    return collection.reduce((acc: any, item: any) => {
-      const id = this.getId(item, type)
-      acc[id] = acc[id] || []
-      acc[id].push(item)
-      return acc
-    })
-  }
-
-  /**
-   *
-   * @param id
-   * @param method
-   */
-  validateId(id: string, method: string) {
-    if (!isStr(id)) this.error('${method}: invalid source id', { id })
-  }
-
-  /**
-   * Calulate edge ID form an edge
-   * @param edge
-   */
-  edgeId(edge: any) {
-    return edgeId(edge, this.error)
-  }
-
-  /**
    * The node ID key
    */
   get nodeIDKey() {
     return this.keys.node.id
   }
 
-  /**
-   * The edge ID key
-   */
-  get edgeIDKey() {
-    return this.keys.edge.id
-  }
+  // EdgeMutator delegation
 
   /**
-   * Find node by ID
+   * Add an edge
    * @param doc
-   * @param id
+   * @param config
    */
-  findNodeById(doc: any, id: string) {
-    const nodes = this.nodesOf(doc)
-    return nodes.find((node: any) => node[this.nodeIDKey] === id)
-  }
-
-  /**
-   * Find node index by ID
-   * @param doc
-   * @param id
-   */
-  findNodeIndexById(doc: any, id: string) {
-    const nodes = this.nodesOf(doc)
-    return nodes.findIndex((node: any) => node[this.nodeIDKey] === id)
-  }
-
-  /**
-   * Find edge by ID
-   * @param doc
-   * @param id
-   */
-  findEdgeById(doc: any, id: string) {
-    const edges = this.edgesOf(doc)
-    return edges.find((edge: any) => edge[this.edgeIDKey] === id)
-  }
-
-  /**
-   * Try to find node by ID, if not found signal error
-   * @param doc
-   * @param id
-   * @param message
-   */
-  errIfNodeNotFound(doc: any, id: string, message?: string) {
-    message = message || `Node not found in graph: ${id}`
-    const found = this.findNodeById(doc, id)
-    return found ? found : this.error(message)
-  }
-
-  /**
-   * Try to find node index by ID, if not found signal error
-   * @param doc
-   * @param id
-   * @param message
-   */
-  errIfNodeIndexNotFound(doc: any, id: string, message?: string) {
-    message = message || `Node not found in graph: ${id}`
-    const index = this.findNodeIndexById(doc, id)
-    return index ? index : this.error(message)
-  }
-
-  /**
-   * Try to find edge by ID, if not found signal error
-   * @param doc
-   * @param id
-   * @param message
-   */
-  errIfEdgeNotFound(doc: any, id: string, message?: string) {
-    message = message || `Edge not found in graph: ${id}`
-    const found = this.findEdgeById(doc, id)
-    return found ? found : this.error(message)
-  }
-
-  /**
-   * Get nodes collection of document
-   * @param doc
-   */
-  nodesOf(doc: any) {
-    return doc[this.keys.nodes]
-  }
-
-  /**
-   * Get edges collection of document
-   * @param doc
-   */
-  edgesOf(doc: any) {
-    return doc[this.keys.edges]
-  }
-
-  /**
-   * Create a new node
-   * @param id
-   * @param value
-   */
-  createNode(id: string, value: any) {
-    return Object.assign(value, {
-      id
-    })
-  }
-
-  /**
-   * Adds a node to document
-   * @param doc
-   * @param data
-   */
-  addNode(doc: any, data: any) {
-    const {
-      id,
-      value
-    } = data
-    const node = this.createNode(id, value)
-    this.errIfDuplicateNodeId(doc, id)
-    const nodes = this.nodesOf(doc)
-    nodes.push(node)
-    this.last.node.added = node
-    this.last.node.affected = node
-    return this
-  }
-
-  /**
-   * Assign data to node
-   * @param node
-   * @param data
-   */
-  setNodeData(node: any, data: any) {
-    return Object.assign(node, data)
-  }
-
-  /**
-   * Update a node in the document
-   * @param doc
-   * @param data
-   */
-  updateNode(doc: any, data: any) {
-    const {
-      id,
-      value
-    } = data
-    delete value.id
-    const nodeToUpdate = this.findNodeById(doc, id)
-    this.setNodeData(nodeToUpdate, value)
-
-    this.last.node.updated = nodeToUpdate
-    this.last.node.affected = nodeToUpdate
-    return this
-  }
-
-  /**
-   * Replace a node in the document
-   * @param doc
-   * @param data
-   */
-  replaceNode(doc: any, data: any) {
-    const {
-      id,
-      value
-    } = data
-    delete value.id
-    const index = this.findNodeIndexById(doc, id)
-    const nodes = this.nodesOf(doc)
-    nodes[index] = value
-    const node = nodes[index]
-    this.last.node.replaced = node
-    this.last.node.affected = node
-    return this
-  }
-
-  /**
-   * Clone an object
-   * @param obj
-   */
-  _cloneObj(obj: any) {
-    return Object.assign({}, obj)
-  }
-
-  /**
-   * Clone a node
-   * @param node
-   */
-  cloneNode(node: any) {
-    return this._cloneObj(node)
-  }
-
-  /**
-   * Clone an edge
-   * @param edge
-   */
-  cloneEdge(edge: any) {
-    this._cloneObj(edge)
-  }
-
-  /**
-   * Remove a node from document
-   * @param doc
-   * @param id
-   */
-  removeNode(doc: any, id: string) {
-    const index = this.errIfNodeIndexNotFound(doc, id, `Node to remove not found in graph: ${id}`)
-    const nodes = this.nodesOf(doc)
-    // clone
-    const nodeToRemove = this.cloneNode(nodes[index])
-
-    nodes.splice(index, 1)
-    this.last.node.removed = nodeToRemove
-    this.last.node.affected = nodeToRemove
-    return this
-  }
-
-  // edge
-
-  /**
-   * Set edge data if available and supported by graph library
-   * @param edge
-   * @param data
-   */
-  setEdgeData(edge: any, data?: any) {
-    if (!this.support.edgeData) return
-    if (!data) return
-    const dataKey = this.keys.edge.data
-    if (dataKey) {
-      edge[dataKey] = data
-    } else {
-      Object.assign(edge, data)
-    }
-    return edge
-  }
-
-  /**
-   * Set directed property of edge to indicate direction
-   * @param edge
-   * @param directed
-   */
-  setEdgeDirected(edge: any, directed: boolean) {
-    edge[this.keys.edge.directed] = !!directed
-    return edge
-  }
-
-  /**
-   * Set properties of edge
-   * @param edge
-   * @param options
-   */
-  setEdge(edge: any, options: { source: string, target: string, data?: any, directed?: boolean }) {
-    const {
-      source,
-      target,
-      data,
-      directed = false
-    } = options
-    this.setEdgeSource(edge, source)
-    this.setEdgeTarget(edge, target)
-    this.setEdgeData(edge, data)
-
-    if (this.supportsDirected) {
-      this.setEdgeDirected(edge, directed)
-    }
-
-    if (!edge.id) {
-      edge.id = this.edgeId(edge)
-    }
-    return edge
-  }
-
-  /**
-   * Set source of edge
-   * @param edge
-   * @param id
-   */
-  setEdgeSource(edge: any, id: string) {
-    this.validateId(id, 'setEdgeSource')
-    edge[this.keys.edge.source] = id
-  }
-
-  /**
-   * Set target of edge
-   * @param edge
-   * @param id
-   */
-  setEdgeTarget(edge: any, id: string) {
-    this.validateId(id, 'setEdgeTarget')
-    edge[this.keys.edge.target] = id
-  }
-
-  /**
-   * Set edge ID to new re-calculated edge id if ID was always auto-calculated
-   * @param edge
-   */
-  setEdgeId(edge: any, options: any) {
-    const { idWasAutoGen, id } = options
-    edge.id = idWasAutoGen && !isStr(id) ? this.edgeId(edge) : edge.id
-  }
-
-  /**
-   * Detect if current edge ID matches ID calculated from edge properties
-   * @param edge
-   */
-  detectIfEdgeIdWasGenerated(edge: any) {
-    return edge.id === this.edgeId(edge)
+  addEdge(doc: any, config: any) {
+    return this.edgeMutator.addEdge(doc, config)
   }
 
   /**
@@ -605,44 +163,8 @@ export class GraphDocMutator {
    * @param config
    */
   updateEdge(doc: any, config: any) {
-    let {
-      id,
-      from,
-      source,
-      target,
-      to
-    } = config
-    target = target || to
-    source = source || from
-
-    if (!id) {
-      this.error('updateEdge: missing id of edge to update', config)
-    }
-
-    if (!source && !target) {
-      this.error(`updateEdge: missing source or target of update to make to edge ${id}`, config)
-    }
-
-    const edgeToUpdate = this.findEdgeById(doc, id)
-    const idWasAutoGen = this.detectIfEdgeIdWasGenerated(edgeToUpdate)
-
-    if (source) {
-      this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
-      this.setEdgeSource(edgeToUpdate, source)
-    }
-    if (target) {
-      this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
-      this.setEdgeSource(edgeToUpdate, target)
-    }
-
-    // TODO: update id if was auto-generated
-    this.setEdgeId(edgeToUpdate, { idWasAutoGen, id: config.id })
-
-    this.last.edge.updated = edgeToUpdate
-    this.last.edge.affected = edgeToUpdate
-    return this
+    return this.edgeMutator.updateEdge(doc, config)
   }
-
 
   /**
    * Remove edge
@@ -650,172 +172,63 @@ export class GraphDocMutator {
    * @param config
    */
   removeEdge(doc: any, config: any) {
-    let {
-      id,
-      from,
-      source,
-      target,
-      to
-    } = config
-    target = target || to
-    source = source || from
-
-    source && this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
-    target && this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
-
-    if (!(id || source && target)) {
-      this.error('removeEdge: Invalid arguments', {
-        id,
-        source,
-        target
-      })
-    }
-
-    function removeValueFromArray(array: any[], value: any) {
-      var index = null;
-
-      while ((index = array.indexOf(value)) !== -1)
-        array.splice(index, 1);
-
-      return array
-    }
-
-    let edge
-    if (id) {
-      edge = doc.edges.find((edge: any) => edge.id === id)
-    } else {
-      const keys = {
-        source: this.keys.edge.source,
-        target: this.keys.edge.target
-      }
-      edge = doc.edges.find((edge: any) => edge[keys.source] === source && edge[keys.target] === target)
-    }
-    const edgeToRemove = this.cloneEdge(edge)
-
-    this.last.edge.removed = edgeToRemove
-    this.last.edge.affected = edgeToRemove
-
-    removeValueFromArray(doc.edges, edge)
-
-    return this
+    return this.edgeMutator.removeEdge(doc, config)
   }
 
+  // NodeMutator delegation
 
   /**
-   * Create a new edge to add
-   * @param config
-   */
-  createEdgeToAdd(config: any) {
-    const { source, target, data } = config
-    const $edge = {}
-    return this.setEdge($edge, { source, target, data })
-  }
-
-  /**
-   * Determine if graph supports adding edge data
-   */
-  get supportsEdgedata() {
-    return !!this.support.edgeData
-  }
-
-  /**
-   * Determine if graph supports directed edges
-   */
-  get supportsDirected() {
-    return !!this.support.directed
-  }
-
-  /**
-   * Determine if edge id is a duplicate
+   * Find node by ID
    * @param doc
    * @param id
    */
-  hasDuplicateEdgeId(doc: any, id: string) {
-    return this.collectionIds(doc, this.edgesOf(doc), 'edge').includes(id)
+  findNodeById(doc: any, id: string) {
+    return this.nodeMutator.findNodeById(doc, id)
   }
 
   /**
-   * Determine if node id is a duplicate
+   * Find node index by ID
    * @param doc
    * @param id
    */
-  hasDuplicateNodeId(doc: any, id: string) {
-    return this.collectionIds(doc, this.nodesOf(doc), 'node').includes(id)
+  findNodeIndexById(doc: any, id: string) {
+    return this.nodeMutator.findNodeIndexById(doc, id)
   }
 
-  duplicateIdError(msg: string, data: any) {
-    this.warn(msg, data)
+
+  /**
+   * Update a node in the document
+   * @param doc
+   * @param data
+   */
+  updateNode(doc: any, data: any) {
+    this.nodeMutator.updateNode(doc, data)
   }
 
   /**
-   * Signal error on duplicate edge id
+   * Adds a node to document
+   * @param doc
+   * @param data
+   */
+  addNode(doc: any, data: any) {
+    this.nodeMutator.addNode(doc, data)
+  }
+
+  /**
+   * Replace a node in the document
+   * @param doc
+   * @param data
+   */
+  replaceNode(doc: any, data: any) {
+    this.nodeMutator.replaceNode(doc, data)
+  }
+
+  /**
+   * Remove a node from document
    * @param doc
    * @param id
    */
-  errIfDuplicateEdgeId(doc: any, id: string) {
-    if (this.hasDuplicateEdgeId(doc, id)) {
-      this.duplicateIdError('Edge id is duplicate', { id, type: 'edge' })
-    }
-  }
-
-  /**
-   * Signal error on duplicate node id
-   * @param doc
-   * @param id
-   */
-  errIfDuplicateNodeId(doc: any, id: string) {
-    if (this.hasDuplicateNodeId(doc, id)) {
-      this.duplicateIdError('Node id is duplicate', { id, type: 'node' })
-    }
-  }
-
-  /**
-   * Add an edge
-   * @param doc
-   * @param config
-   */
-  addEdge(doc: any, config: any) {
-    let {
-      id,
-      from,
-      source,
-      target,
-      to,
-      directed,
-      data
-    } = config
-
-    target = target || to
-    source = source || from
-
-
-    const edge: any = {
-      directed,
-      source,
-      target
-    }
-
-    if (this.supportsEdgedata) {
-      edge.data = data
-    }
-
-    id = id || this.edgeId(edge)
-
-    this.errIfDuplicateEdgeId(doc, id)
-
-    edge.id = id
-
-    this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
-    this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
-
-    const edges = this.edgesOf(doc)
-    const $edge = {}
-    const edgeToAdd = this.setEdge($edge, edge)
-    edges.push(edgeToAdd)
-
-    this.last.edge.added = edge
-    this.last.edge.affected = edge
-
-    return this
+  removeNode(doc: any, id: string) {
+    this.nodeMutator.removeNode(doc, id)
   }
 }
