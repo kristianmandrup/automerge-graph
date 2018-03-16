@@ -182,6 +182,15 @@ export class GraphDocMutator {
 
   /**
    *
+   * @param message
+   * @param data
+   */
+  warn(message: string, data?: any) {
+    this.log('WARNING:' + message, data)
+  }
+
+  /**
+   *
    * @param doc
    * @param data
    */
@@ -740,6 +749,10 @@ export class GraphDocMutator {
     return this.collectionIds(doc, this.nodesOf(doc), 'node').includes(id)
   }
 
+  duplicateIdError(msg: string, data: any) {
+    this.warn(msg, data)
+  }
+
   /**
    * Signal error on duplicate edge id
    * @param doc
@@ -747,7 +760,7 @@ export class GraphDocMutator {
    */
   errIfDuplicateEdgeId(doc: any, id: string) {
     if (this.hasDuplicateEdgeId(doc, id)) {
-      this.error('Edge id is duplicate', { id })
+      this.duplicateIdError('Edge id is duplicate', { id, type: 'edge' })
     }
   }
 
@@ -758,7 +771,7 @@ export class GraphDocMutator {
    */
   errIfDuplicateNodeId(doc: any, id: string) {
     if (this.hasDuplicateNodeId(doc, id)) {
-      this.error('Node id is duplicate', { id })
+      this.duplicateIdError('Node id is duplicate', { id, type: 'node' })
     }
   }
 
