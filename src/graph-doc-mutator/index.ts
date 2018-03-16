@@ -245,6 +245,19 @@ export class GraphDocMutator {
   }
 
   /**
+   * Get IDs of collection (nodes or edges)
+   * @param doc
+   * @param collection
+   * @param type
+   */
+  collectionIds(doc: any, collection: any, type?: string) {
+    return collection.map((item: any) => {
+      return this.getId(item, type)
+    })
+  }
+
+
+  /**
    * Group a collection of nodes or edges by ID in order to determine duplicates
    * @param doc
    * @param collection
@@ -394,6 +407,7 @@ export class GraphDocMutator {
       value
     } = data
     const node = this.createNode(id, value)
+    this.errIfDuplicateNodeId(doc, id)
     const nodes = this.nodesOf(doc)
     nodes.push(node)
     this.last.node.added = node
@@ -566,6 +580,23 @@ export class GraphDocMutator {
   }
 
   /**
+   * Set edge ID to new re-calculated edge id if ID was always auto-calculated
+   * @param edge
+   */
+  setEdgeId(edge: any, options: any) {
+    const { idWasAutoGen, id } = options
+    edge.id = idWasAutoGen && !isStr(id) ? this.edgeId(edge) : edge.id
+  }
+
+  /**
+   * Detect if current edge ID matches ID calculated from edge properties
+   * @param edge
+   */
+  detectIfEdgeIdWasGenerated(edge: any) {
+    return edge.id === this.edgeId(edge)
+  }
+
+  /**
    * Update edge
    * @param doc
    * @param config
@@ -590,6 +621,7 @@ export class GraphDocMutator {
     }
 
     const edgeToUpdate = this.findEdgeById(doc, id)
+    const idWasAutoGen = this.detectIfEdgeIdWasGenerated(edgeToUpdate)
 
     if (source) {
       this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
@@ -599,6 +631,10 @@ export class GraphDocMutator {
       this.errIfNodeNotFound(doc, target, `Invalid target node: ${target}`)
       this.setEdgeSource(edgeToUpdate, target)
     }
+
+    // TODO: update id if was auto-generated
+    this.setEdgeId(edgeToUpdate, { idWasAutoGen, id: config.id })
+
     this.last.edge.updated = edgeToUpdate
     this.last.edge.affected = edgeToUpdate
     return this
@@ -687,6 +723,46 @@ export class GraphDocMutator {
   }
 
   /**
+   * Determine if edge id is a duplicate
+   * @param doc
+   * @param id
+   */
+  hasDuplicateEdgeId(doc: any, id: string) {
+    return this.collectionIds(doc, this.edgesOf(doc), 'edge').includes(id)
+  }
+
+  /**
+   * Determine if node id is a duplicate
+   * @param doc
+   * @param id
+   */
+  hasDuplicateNodeId(doc: any, id: string) {
+    return this.collectionIds(doc, this.nodesOf(doc), 'node').includes(id)
+  }
+
+  /**
+   * Signal error on duplicate edge id
+   * @param doc
+   * @param id
+   */
+  errIfDuplicateEdgeId(doc: any, id: string) {
+    if (this.hasDuplicateEdgeId(doc, id)) {
+      this.error('Edge id is duplicate', { id })
+    }
+  }
+
+  /**
+   * Signal error on duplicate node id
+   * @param doc
+   * @param id
+   */
+  errIfDuplicateNodeId(doc: any, id: string) {
+    if (this.hasDuplicateNodeId(doc, id)) {
+      this.error('Node id is duplicate', { id })
+    }
+  }
+
+  /**
    * Add an edge
    * @param doc
    * @param config
@@ -717,6 +793,9 @@ export class GraphDocMutator {
     }
 
     id = id || this.edgeId(edge)
+
+    this.errIfDuplicateEdgeId(doc, id)
+
     edge.id = id
 
     this.errIfNodeNotFound(doc, source, `Invalid source node: ${source}`)
