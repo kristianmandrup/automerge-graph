@@ -36,7 +36,6 @@ export class Committer {
     this.data = action.data
     this.mutator = new GraphDocMutator()
     this.initiator = initiator
-    this.autoCommit = autoCommit
     this.autoMessage = autoMessage || autoCommit
   }
 

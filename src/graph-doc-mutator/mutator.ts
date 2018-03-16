@@ -1,7 +1,7 @@
 import {
   INotifier,
   Notifier
-} from './notifier'
+} from '../notifier'
 import { IGraphDocMutator } from '.';
 
 import {

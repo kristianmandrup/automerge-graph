@@ -1,4 +1,8 @@
 import {
+  INotifier,
+  Notifier
+} from './notifier'
+import {
   createDoc
 } from './create-doc'
 import {
@@ -20,6 +24,7 @@ function isStr(value: any) {
 export class AutomergeGraph {
   label: string
   doc: any
+  notifier: INotifier
   committerOpts: any
   options: any
   logger: any
@@ -27,16 +32,23 @@ export class AutomergeGraph {
   enable: {
     autoId: boolean
   }
-  commitHistory: any[]
+  actionHistory: any[]
   committer: Committer
-  autoCommit: boolean = false
+  mustCommit: boolean
+  autoCommit: boolean
 
+  /**
+   * Create the AutomergeGraph instance
+   * @param options
+   */
   constructor(options: any = {}) {
     const {
       label,
       createGraph // pass your own graph factory
     } = options
     this.options = options
+    const createNotifier = options.createNotifier || this.createNotifier
+    this.notifier = createNotifier(options)
     this.enable = options.enable || {}
     this.label = label || 'autograph'
     this.doc = createDoc(options)
@@ -48,35 +60,28 @@ export class AutomergeGraph {
     this.logger = options.logger || console
   }
 
+  /**
+   * Factory to create notifier
+   * @param options
+   */
+  createNotifier(options: any) {
+    return new Notifier(options)
+  }
+
+  log(msg: string, data?: any) {
+    this.notifier.log(msg, data)
+  }
+
+  warn(msg: string, data?: any) {
+    this.notifier.warn(msg, data)
+  }
+
+  error(msg: string, data?: any) {
+    this.notifier.error(msg, data)
+  }
+
   createDefaultGraph(options: any = {}) {
     return createNGraphDoc(options)
-  }
-
-  get docNodes() {
-    return this.doc.nodes
-  }
-
-  get docEdges() {
-    return this.doc.edges
-  }
-
-  /**
-   * Log message via logger
-   * @param message
-   * @param data
-   */
-  log(message: string, data?: any) {
-    data ? this.logger.log(message, data) : this.logger.log(message)
-  }
-
-  /**
-   * Signal and throw error
-   * @param message
-   * @param data
-   */
-  error(message: string, data?: any) {
-    this.log(message, data)
-    throw new Error(message)
   }
 
   /**
@@ -207,15 +212,37 @@ export class AutomergeGraph {
    */
   doAction(action: any, data: any = {}) {
     action = this.createAction(data, action)
+    this.actionHistory.push(action)
     this.committer = this.createCommitter(action)
+    this.mustCommit = true
     if (this.autoCommit) {
       this.commit()
     }
     return this
   }
 
+  get lastAction() {
+    return this.actionHistory[this.actionHistory.length - 1]
+  }
+
+  /**
+   * Commit action with message via Committer
+   * @param message
+   */
   commit(message?: string) {
     this.committer.commit(message)
+    this.mustCommit = false
+    return this
+  }
+
+  /**
+   * Validate if action can be executed or if previous action must first be committed
+   * @param method
+   */
+  validateAction(method: string) {
+    if (this.mustCommit) {
+      this.error(`Invalid action ${method}. Must commit previous action ${this.lastAction.name} first`)
+    }
   }
 
   /**
@@ -224,10 +251,12 @@ export class AutomergeGraph {
    * @param value
    */
   addNode(id: any, value?: any) {
-    const data = this.getData(id, value, 'addNode')
+    const name = 'addNode'
+    this.validateAction(name)
+    const data = this.getData(id, value, name)
     this.graph.addNode(data)
     return this.doAction({
-      name: 'addNode',
+      name,
     }, data)
   }
 
@@ -237,10 +266,12 @@ export class AutomergeGraph {
    * @param value
    */
   updateNode(id: any, value?: any) {
-    const data = this.getData(id, value, 'addNode')
+    const name = 'updateNode'
+    this.validateAction(name)
+    const data = this.getData(id, value, name)
     this.graph.updateNode(data)
     return this.doAction({
-      name: 'updateNode',
+      name,
     }, data)
   }
 
@@ -250,10 +281,12 @@ export class AutomergeGraph {
    * @param value
    */
   replaceNode(id: any, value?: any) {
-    const data = this.getData(id, value, 'addNode')
+    const name = 'replaceNode'
+    this.validateAction(name)
+    const data = this.getData(id, value, name)
     this.graph.replaceNode(data)
     return this.doAction({
-      name: 'replaceNode',
+      name,
     }, data)
   }
 
@@ -262,11 +295,13 @@ export class AutomergeGraph {
    * @param id
    */
   removeNode(idArg: any) {
+    const name = 'removeNode'
+    this.validateAction(name)
     let id = isStr(idArg) ? String(idArg) : String(idArg.id)
-    id = this.validateAndFormatId(id, 'removeNode')
+    id = this.validateAndFormatId(id, name)
     this.graph.removeNode(id)
     return this.doAction({
-      name: 'removeNode',
+      name,
       id
     })
   }
@@ -278,10 +313,12 @@ export class AutomergeGraph {
    * @param opts
    */
   addEdge(id: any, opts?: any) {
-    const data = this.getData(id, opts, 'addEdge')
+    const name = 'addEdge'
+    this.validateAction(name)
+    const data = this.getData(id, opts, name)
     this.graph.addEdge(data)
     return this.doAction({
-      name: 'addEdge',
+      name,
     }, data)
   }
 
@@ -291,10 +328,12 @@ export class AutomergeGraph {
    * @param opts
    */
   updateEdge(id: any, opts?: any) {
-    const data = this.getData(id, opts, 'updateEdge')
+    const name = 'updateEdge'
+    this.validateAction(name)
+    const data = this.getData(id, opts, name)
     this.graph.updateEdge(data)
     return this.doAction({
-      name: 'updateEdge'
+      name
     }, data)
   }
 
@@ -303,11 +342,13 @@ export class AutomergeGraph {
    * @param id
    */
   removeEdge(idArg: any) {
+    const name = 'removeEdge'
+    this.validateAction(name)
     let id = isStr(idArg) ? String(idArg) : String(idArg.id)
-    id = this.validateAndFormatId(id, 'removeEdge')
+    id = this.validateAndFormatId(id, name)
     this.graph.updateEdge(id)
     return this.doAction({
-      name: 'removeEdge',
+      name,
       id
     })
   }
