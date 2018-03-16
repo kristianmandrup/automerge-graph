@@ -1,9 +1,10 @@
+import {
+  INotifier,
+  Notifier
+} from './notifier'
+
 function isStr(value: any) {
   return typeof value === 'string'
-}
-
-interface ILogger {
-  log: Function
 }
 
 /**
@@ -129,7 +130,7 @@ export class GraphDocMutator {
     edgeData: false,
     directed: true
   }
-  logger: ILogger
+
   last: {
     node: IAffect,
     edge: IAffect
@@ -142,14 +143,15 @@ export class GraphDocMutator {
     default: keyLayouts.ngraph
   }
 
+  notifier: INotifier
+
   /**
    * Create the GraphDocMutator with some options
    * @param options
    */
   constructor(options: any = {}) {
-    this.logger = options.logger || console
     this.support = options.support || this.support
-    this.error = this.error.bind(this)
+    this.notifier = this.createNotifier(options)
     if (options.layouts) {
       this.layouts = Object.assign(this.layouts, options.layouts || {})
     }
@@ -162,31 +164,23 @@ export class GraphDocMutator {
   }
 
   /**
-   * Log a message with optional data
-   * @param message
-   * @param data
+   * Factory to create notifier
+   * @param options
    */
-  log(message: string, data?: any) {
-    data ? this.logger.log(message, data) : this.logger.log(message)
+  createNotifier(options: any) {
+    return new Notifier(options)
   }
 
-  /**
-   *
-   * @param message
-   * @param data
-   */
-  error(message: string, data?: any) {
-    this.log(message, data)
-    throw new Error(message)
+  log(msg: string, data?: any) {
+    this.notifier.log(msg, data)
   }
 
-  /**
-   *
-   * @param message
-   * @param data
-   */
-  warn(message: string, data?: any) {
-    this.log('WARNING:' + message, data)
+  warn(msg: string, data?: any) {
+    this.notifier.warn(msg, data)
+  }
+
+  error(msg: string, data?: any) {
+    this.notifier.error(msg, data)
   }
 
   /**
