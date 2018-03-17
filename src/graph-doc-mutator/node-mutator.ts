@@ -7,6 +7,8 @@ import {
 } from './mutator'
 
 export class NodeMutator extends Mutator implements INodeMutator {
+  itemType: string = 'node'
+
   constructor(options: any = {}) {
     super(options)
   }
@@ -95,12 +97,13 @@ export class NodeMutator extends Mutator implements INodeMutator {
       id,
       value
     } = data
-    const node = this.createNode(id, value)
+    const nodeToAdd = this.createNode(id, value)
     this.errIfDuplicateNodeId(doc, id)
     const nodes = this.nodesOf(doc)
-    nodes.push(node)
-    this.last.node.added = node
-    this.last.node.affected = node
+    nodes.push(nodeToAdd)
+
+    const action = 'add'
+    this.addToHistory(doc, nodeToAdd, { action })
     return this
   }
 
@@ -115,11 +118,16 @@ export class NodeMutator extends Mutator implements INodeMutator {
       value
     } = data
     delete value.id
-    const nodeToUpdate = this.findNodeById(doc, id)
+    const nodeToUpdate = this.cloneNode(this.findNodeById(doc, id))
     this.setNodeData(nodeToUpdate, value)
+    const updatedNode = this.findNodeById(doc, id)
 
-    this.last.node.updated = nodeToUpdate
-    this.last.node.affected = nodeToUpdate
+    const action = 'updated'
+
+    this.addToHistory(doc, {
+      updated: nodeToUpdate,
+      with: updatedNode
+    }, { action })
     return this
   }
 
@@ -136,10 +144,14 @@ export class NodeMutator extends Mutator implements INodeMutator {
     delete value.id
     const index = this.findNodeIndexById(doc, id)
     const nodes = this.nodesOf(doc)
+    const nodeReplaced = this.cloneNode(nodes[index])
     nodes[index] = value
     const node = nodes[index]
-    this.last.node.replaced = node
-    this.last.node.affected = node
+    const action = 'replaced'
+    this.addToHistory(doc, {
+      replaced: nodeReplaced,
+      with: node
+    }, { action })
     return this
   }
 
@@ -157,8 +169,8 @@ export class NodeMutator extends Mutator implements INodeMutator {
     const nodeToRemove = this.cloneNode(nodes[index])
 
     nodes.splice(index, 1)
-    this.last.node.removed = nodeToRemove
-    this.last.node.affected = nodeToRemove
+    const action = 'removed'
+    this.addToHistory(doc, nodeToRemove, { action })
     return this
   }
 }

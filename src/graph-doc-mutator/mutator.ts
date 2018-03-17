@@ -13,6 +13,7 @@ export abstract class Mutator {
   options: any
   keys: any
   gdm: IGraphDocMutator
+  itemType: string = 'unknown'
 
   constructor(options: any) {
     this.options = options
@@ -20,8 +21,27 @@ export abstract class Mutator {
     this.keys = {}
   }
 
+  get last() {
+    return this.gdm.last
+  }
+
   init(gdm: IGraphDocMutator) {
     this.gdm = gdm
+  }
+
+  addToHistory(doc: any, item: any, details: any) {
+    let { action, type } = details
+    type = type || this.itemType
+    type = type || this.detectType(item)
+    doc.changes.push({
+      action,
+      type,
+      item
+    })
+    const last = this.last[type]
+    last[action] = item
+    last.affected = item
+    return this
   }
 
   /**
@@ -108,6 +128,8 @@ export abstract class Mutator {
    */
   detectType(item: any) {
     const sameIdKey = this.keys.edge.id === this.keys.node.id
+
+    item = item.with ? item.with : item
 
     const edgeKeys = Object.keys(this.keys.edge).filter(key => !(key === 'id' && sameIdKey))
     return edgeKeys.find(key => item[key]) ? 'edge' : 'node'

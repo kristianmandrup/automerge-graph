@@ -42,70 +42,74 @@ export abstract class BaseGraph {
   }
 
   get initialGraph() {
+    return this.history
+  }
+
+  get history() {
     return {
-      // keep set of changes made, one per mutator action
       changes: []
     }
   }
+}
 
-  get g() {
-    return this._g.graph
-  }
+get g() {
+  return this._g.graph
+}
 
-  toGraph() {
-    throw new Error('toGraph: Not yet implemented')
-  }
+toGraph() {
+  throw new Error('toGraph: Not yet implemented')
+}
 
-  nodes() {
-    throw new Error('nodes: Not yet implemented')
-    // return []
-  }
+nodes() {
+  throw new Error('nodes: Not yet implemented')
+  // return []
+}
 
-  edges() {
-    throw new Error('edges: Not yet implemented')
-    // return []
-  }
+edges() {
+  throw new Error('edges: Not yet implemented')
+  // return []
+}
 
-  merge(graph: any, into?: any) {
-    this.mutator.merge(this.g || into, graph)
-    return this
-  }
+merge(graph: any, into ?: any) {
+  this.mutator.merge(this.g || into, graph)
+  return this
+}
 
-  addNode(data: any) {
-    this.mutator.addNode(this.g, data)
-    return this
-  }
+addNode(data: any) {
+  this.mutator.addNode(this.g, data)
+  return this
+}
 
-  updateNode(data: any) {
-    this.mutator.updateNode(this.g, data)
-    return this
-  }
+updateNode(data: any) {
+  this.mutator.updateNode(this.g, data)
+  return this
+}
 
-  replaceNode(data: any) {
-    this.mutator.replaceNode(this.g, data)
-    return this
-  }
+replaceNode(data: any) {
+  this.mutator.replaceNode(this.g, data)
+  return this
+}
 
-  removeNode(id: string) {
-    this.mutator.removeNode(this.g, id)
-    return this
-  }
+removeNode(id: string) {
+  this.mutator.removeNode(this.g, id)
+  return this
+}
 
-  // edge API
+// edge API
 
-  addEdge(data: any) {
-    this.mutator.addEdge(this.g, data)
-    return this
-  }
+addEdge(data: any) {
+  this.mutator.addEdge(this.g, data)
+  return this
+}
 
-  updateEdge(data: any) {
-    this.mutator.updateEdge(this.g, data)
-    return this
-  }
+updateEdge(data: any) {
+  this.mutator.updateEdge(this.g, data)
+  return this
+}
 
-  removeEdge(id: string) {
-    this.mutator.removeEdge(this.g, id)
-    return this
-  }
+removeEdge(id: string) {
+  this.mutator.removeEdge(this.g, id)
+  return this
+}
 }
 

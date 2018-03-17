@@ -6,6 +6,8 @@ import {
 } from './utils'
 
 export class EdgeMutator extends Mutator implements IEdgeMutator {
+  itemType: string = 'edge'
+
   constructor(options: any = {}) {
     super(options)
   }
@@ -256,9 +258,8 @@ export class EdgeMutator extends Mutator implements IEdgeMutator {
     const edgeToAdd = this.setEdge($edge, edge)
     edges.push(edgeToAdd)
 
-    this.last.edge.added = edge
-    this.last.edge.affected = edge
-
+    const action = 'added'
+    this.addToHistory(doc, edgeToAdd, { action })
     return this
   }
 
@@ -300,9 +301,13 @@ export class EdgeMutator extends Mutator implements IEdgeMutator {
 
     // TODO: update id if was auto-generated
     this.setEdgeId(edgeToUpdate, { idWasAutoGen, id: config.id })
+    const edgeUpdated = this.findEdgeById(doc, id)
 
-    this.last.edge.updated = edgeToUpdate
-    this.last.edge.affected = edgeToUpdate
+    const action = 'updated'
+    this.addToHistory(doc, {
+      updated: edgeToUpdate,
+      with: edgeUpdated
+    }, { action })
     return this
   }
 
@@ -355,8 +360,8 @@ export class EdgeMutator extends Mutator implements IEdgeMutator {
     }
     const edgeToRemove = this.cloneEdge(edge)
 
-    this.last.edge.removed = edgeToRemove
-    this.last.edge.affected = edgeToRemove
+    const action = 'removed'
+    this.addToHistory(doc, edgeToRemove, { action })
 
     removeValueFromArray(doc.edges, edge)
 

@@ -33,7 +33,7 @@ export class NGraphDoc extends BaseGraph {
   get initialGraph() {
     return Object.assign(super.initialGraph, {
       nodes: [],
-      links: []
+      links: [],
     })
   }
 
