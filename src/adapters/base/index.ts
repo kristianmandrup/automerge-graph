@@ -49,7 +49,7 @@ export abstract class BaseGraph {
     return {
       actions: {
         done: [],
-        undo: []
+        undone: []
       }
     }
   }

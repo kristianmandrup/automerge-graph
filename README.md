@@ -253,7 +253,31 @@ Each method such as addNode performs the mutation using the same `GraphDocMutato
 
 ## Undo/Redo
 
-The underlying `doc` document may contain a history of `done` actions and inverse `undo` actions. You can use these lists to undo or redo graph actions as you see fit.
+The underlying `doc` document may contain a history of `done` actions with their inverse `undo` action.
+
+If an action is undone, the `undo` of the stored action is executed and the action is popped and pushed onto the `undo` list where it can now be executed as `redo`. If another regular action is performed in the meantime, the `redo` action is lost (ie. `undo` list is erased).
+
+For more see [Command Pattern](https://en.wikipedia.org/wiki/Command_pattern)
+
+```js
+
+{
+  'do': {
+    action: 'addNode',
+    data: {
+      // ...
+    }
+  },
+  'undo': {
+    action: 'removeNode',
+    data: {
+      // ...
+    }
+  }
+}
+```
+
+Note: Undo/Redo logic is not yet implemented, only the underlying lists and actions to make it possible.
 
 ## NGraph
 

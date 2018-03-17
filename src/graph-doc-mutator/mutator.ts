@@ -37,18 +37,22 @@ export abstract class Mutator {
     return doc.actions.undo
   }
 
+  lastDoneAction(doc: any) {
+    const actions = this.doneActions(doc)
+    return actions[actions.length - 1]
+  }
+
   addUndo(doc: any, item: any, details: any) {
     let { action, type } = details
     type = type || this.itemType
     type = type || this.detectType(item)
 
-    const undoActions = this.undoActions(doc)
-
-    undoActions.push({
+    const lastAction = this.lastDoneAction(doc)
+    lastAction.undo = {
       action,
       type,
       item
-    })
+    }
   }
 
   addDone(doc: any, item: any, details: any) {
@@ -59,9 +63,11 @@ export abstract class Mutator {
     const doneActions = this.doneActions(doc)
 
     doneActions.push({
-      action,
-      type,
-      item
+      do: {
+        action,
+        type,
+        item
+      }
     })
     const last = this.last[type]
     last[action] = item
