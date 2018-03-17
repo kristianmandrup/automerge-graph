@@ -82,17 +82,17 @@ const autoGraph = createAutomergeGraph({
 
   // convenient reference to previous actions/nodes/edges
   // using grouped history
-  .removeNode(autoGraph.last.node.updated)
+  .removeNode(autoGraph.last.node.updated.with)
   .commit('remove node: kristian')
   // (optionally) clear up action history before next batch of actions
   .clearHistory()
 ```
 
-Each of these actions will result in an `automerge` commit
+Each of these actions will result in an `automerge` commit.
 
 ## Auto-message
 
-The API also supports an option to use auto commit messaging...
+The API supports auto commit messaging
 
 ```js
 const autoGraph = createAutomergeGraph({
@@ -142,7 +142,7 @@ createAutoGraph({
 })
 ```
 
-## Hydration on remote peer
+## Graph "hydration" on remote peers
 
 A user on another peer node (f.ex via [MPL](https://github.com/automerge/mpl)) can receive automerge graph updates as JSON updates. These updates can be re-materialized (also known as *hydrated* in front-end speak) back into a graph in memory.
 
@@ -250,6 +250,10 @@ addNode(data?: any) {
 ```
 
 Each method such as addNode performs the mutation using the same `GraphDocMutator` instance used by the graph adapter.
+
+## Undo/Redo
+
+The underlying `doc` document may contain a history of `done` actions and inverse `undo` actions. You can use these lists to undo or redo graph actions as you see fit.
 
 ## NGraph
 

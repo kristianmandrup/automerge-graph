@@ -29,11 +29,36 @@ export abstract class Mutator {
     this.gdm = gdm
   }
 
-  addToHistory(doc: any, item: any, details: any) {
+  doneActions(doc: any) {
+    return doc.actions.done
+  }
+
+  undoActions(doc: any) {
+    return doc.actions.undo
+  }
+
+  addUndo(doc: any, item: any, details: any) {
     let { action, type } = details
     type = type || this.itemType
     type = type || this.detectType(item)
-    doc.changes.push({
+
+    const undoActions = this.undoActions(doc)
+
+    undoActions.push({
+      action,
+      type,
+      item
+    })
+  }
+
+  addDone(doc: any, item: any, details: any) {
+    let { action, type } = details
+    type = type || this.itemType
+    type = type || this.detectType(item)
+
+    const doneActions = this.doneActions(doc)
+
+    doneActions.push({
       action,
       type,
       item

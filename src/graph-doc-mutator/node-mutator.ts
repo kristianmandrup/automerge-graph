@@ -103,7 +103,8 @@ export class NodeMutator extends Mutator implements INodeMutator {
     nodes.push(nodeToAdd)
 
     const action = 'add'
-    this.addToHistory(doc, nodeToAdd, { action })
+    this.addDone(doc, { item: nodeToAdd }, { action })
+    this.addUndo(doc, { item: nodeToAdd }, { action: 'remove' })
     return this
   }
 
@@ -124,10 +125,16 @@ export class NodeMutator extends Mutator implements INodeMutator {
 
     const action = 'updated'
 
-    this.addToHistory(doc, {
-      updated: nodeToUpdate,
+    this.addDone(doc, {
+      item: nodeToUpdate,
       with: updatedNode
     }, { action })
+
+    this.addUndo(doc, {
+      with: nodeToUpdate,
+      item: updatedNode
+    }, { action })
+
     return this
   }
 
@@ -148,10 +155,16 @@ export class NodeMutator extends Mutator implements INodeMutator {
     nodes[index] = value
     const node = nodes[index]
     const action = 'replaced'
-    this.addToHistory(doc, {
-      replaced: nodeReplaced,
+    this.addDone(doc, {
+      item: nodeReplaced,
       with: node
     }, { action })
+
+    this.addUndo(doc, {
+      with: nodeReplaced,
+      itme: node
+    }, { action })
+
     return this
   }
 
@@ -169,8 +182,8 @@ export class NodeMutator extends Mutator implements INodeMutator {
     const nodeToRemove = this.cloneNode(nodes[index])
 
     nodes.splice(index, 1)
-    const action = 'removed'
-    this.addToHistory(doc, nodeToRemove, { action })
+    this.addDone(doc, { item: nodeToRemove }, { action: 'remove' })
+    this.addUndo(doc, { item: nodeToRemove }, { action: 'add' })
     return this
   }
 }

@@ -47,69 +47,72 @@ export abstract class BaseGraph {
 
   get history() {
     return {
-      changes: []
+      actions: {
+        done: [],
+        undo: []
+      }
     }
   }
-}
 
-get g() {
-  return this._g.graph
-}
 
-toGraph() {
-  throw new Error('toGraph: Not yet implemented')
-}
+  get g() {
+    return this._g.graph
+  }
 
-nodes() {
-  throw new Error('nodes: Not yet implemented')
-  // return []
-}
+  toGraph() {
+    throw new Error('toGraph: Not yet implemented')
+  }
 
-edges() {
-  throw new Error('edges: Not yet implemented')
-  // return []
-}
+  nodes() {
+    throw new Error('nodes: Not yet implemented')
+    // return []
+  }
 
-merge(graph: any, into ?: any) {
-  this.mutator.merge(this.g || into, graph)
-  return this
-}
+  edges() {
+    throw new Error('edges: Not yet implemented')
+    // return []
+  }
 
-addNode(data: any) {
-  this.mutator.addNode(this.g, data)
-  return this
-}
+  merge(graph: any, into?: any) {
+    this.mutator.merge(this.g || into, graph)
+    return this
+  }
 
-updateNode(data: any) {
-  this.mutator.updateNode(this.g, data)
-  return this
-}
+  addNode(data: any) {
+    this.mutator.addNode(this.g, data)
+    return this
+  }
 
-replaceNode(data: any) {
-  this.mutator.replaceNode(this.g, data)
-  return this
-}
+  updateNode(data: any) {
+    this.mutator.updateNode(this.g, data)
+    return this
+  }
 
-removeNode(id: string) {
-  this.mutator.removeNode(this.g, id)
-  return this
-}
+  replaceNode(data: any) {
+    this.mutator.replaceNode(this.g, data)
+    return this
+  }
 
-// edge API
+  removeNode(id: string) {
+    this.mutator.removeNode(this.g, id)
+    return this
+  }
 
-addEdge(data: any) {
-  this.mutator.addEdge(this.g, data)
-  return this
-}
+  // edge API
 
-updateEdge(data: any) {
-  this.mutator.updateEdge(this.g, data)
-  return this
-}
+  addEdge(data: any) {
+    this.mutator.addEdge(this.g, data)
+    return this
+  }
 
-removeEdge(id: string) {
-  this.mutator.removeEdge(this.g, id)
-  return this
-}
+  updateEdge(data: any) {
+    this.mutator.updateEdge(this.g, data)
+    return this
+  }
+
+  removeEdge(id: string) {
+    this.mutator.removeEdge(this.g, id)
+    return this
+  }
 }
 

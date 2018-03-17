@@ -259,7 +259,8 @@ export class EdgeMutator extends Mutator implements IEdgeMutator {
     edges.push(edgeToAdd)
 
     const action = 'added'
-    this.addToHistory(doc, edgeToAdd, { action })
+    this.addDone(doc, { item: edgeToAdd }, { action })
+    this.addUndo(doc, { item: edgeToAdd }, { action: 'remove' })
     return this
   }
 
@@ -304,9 +305,14 @@ export class EdgeMutator extends Mutator implements IEdgeMutator {
     const edgeUpdated = this.findEdgeById(doc, id)
 
     const action = 'updated'
-    this.addToHistory(doc, {
-      updated: edgeToUpdate,
+    this.addDone(doc, {
+      item: edgeToUpdate,
       with: edgeUpdated
+    }, { action })
+
+    this.addUndo(doc, {
+      with: edgeToUpdate,
+      item: edgeUpdated
     }, { action })
     return this
   }
@@ -361,7 +367,8 @@ export class EdgeMutator extends Mutator implements IEdgeMutator {
     const edgeToRemove = this.cloneEdge(edge)
 
     const action = 'removed'
-    this.addToHistory(doc, edgeToRemove, { action })
+    this.addDone(doc, { item: edgeToRemove }, { action })
+    this.addUndo(doc, { item: edgeToRemove }, { action: 'add' })
 
     removeValueFromArray(doc.edges, edge)
 
