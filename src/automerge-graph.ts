@@ -32,6 +32,11 @@ interface ILastActions {
   edge: any
 }
 
+const emptyLast = {
+  node: {},
+  edge: {}
+}
+
 export class AutomergeGraph {
   label: string
   doc: any
@@ -45,10 +50,7 @@ export class AutomergeGraph {
   actionCommitHistory: any[] = []
   committer: Committer
   mustCommit: boolean
-  last: ILastActions = {
-    node: {},
-    edge: {}
-  }
+  last: ILastActions = emptyLast
 
   enable: IEnabled = {
     autoId: true,
@@ -236,6 +238,20 @@ export class AutomergeGraph {
 
   actionType(name: string) {
     return this.actionTypes.find((type: string) => new RegExp(type).test(name)) || 'unknown'
+  }
+
+  clearActionHistory() {
+    this.actionHistory = []
+  }
+
+  clearActionCommitHistory() {
+    this.actionCommitHistory = []
+  }
+
+  clearHistory() {
+    this.clearActionHistory()
+    this.clearActionCommitHistory()
+    this.last = emptyLast
   }
 
   /**

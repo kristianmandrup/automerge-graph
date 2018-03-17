@@ -80,9 +80,12 @@ const autoGraph = createAutomergeGraph({
   .removeNode({id: 'person:javier'})
   .commit('remove node: javier')
 
-  // super convenient shortcut using grouped history maintained
+  // convenient reference to previous actions/nodes/edges
+  // using grouped history
   .removeNode(autoGraph.last.node.updated)
   .commit('remove node: kristian')
+  // (optionally) clear up action history before next batch of actions
+  .clearHistory()
 ```
 
 Each of these actions will result in an `automerge` commit
