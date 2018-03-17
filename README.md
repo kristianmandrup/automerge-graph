@@ -80,9 +80,8 @@ const autoGraph = createAutomergeGraph({
   .removeNode({id: 'person:javier'})
   .commit('remove node: javier')
 
-  // since krisNode contains the id: 'person:kristian'
-  // super convenient!
-  .removeNode(krisNode)
+  // super convenient shortcut using grouped history maintained
+  .removeNode(autoGraph.last.node.updated)
   .commit('remove node: kristian')
 ```
 
@@ -119,7 +118,26 @@ const autoGraph = createAutomergeGraph({
 // The other peers should see these commit messages as their underlying graph is updated
 ```
 
-You can also pass an `autoCommit` option to automatically commit each action with the auto generated message.
+## Settings
+
+To enable or disable special modes or settings, pass an `enable` object as an option whith your settings.
+
+You can pass an `autoCommit` (true|false) option to automatically control if each action is to use an auto-generated commit message.
+
+Note that `autoCommit` is now turned on by default and must be disabled `autoCommit: false` to take back control of your own commit messages.
+
+Another setting `remoteSync`controls whether AutoGraph forces you to sync every action with remote peers. It is enabled by default and enforces that every graph action is followed by a commit.
+
+Example settings:
+
+```js
+createAutoGraph({
+  enable: {
+    autoCommit: false,
+    remoteSync: false
+  }
+})
+```
 
 ## Hydration on remote peer
 

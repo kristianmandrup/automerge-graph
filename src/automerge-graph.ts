@@ -21,6 +21,17 @@ function isStr(value: any) {
   return typeof value === 'string' && value.length > 0
 }
 
+interface IEnabled {
+  autoId: boolean
+  remoteSync: boolean
+  autoCommit: boolean
+}
+
+interface ILastActions {
+  node: any
+  edge: any
+}
+
 export class AutomergeGraph {
   label: string
   doc: any
@@ -29,20 +40,21 @@ export class AutomergeGraph {
   options: any
   logger: any
   graph: IGraph
-  enable: {
-    autoId: boolean
-  }
   action: any
   actionHistory: any[] = []
   actionCommitHistory: any[] = []
   committer: Committer
   mustCommit: boolean
-  autoCommit: boolean
-  enabled: {
-    remoteSync: boolean
-  } = {
-      remoteSync: true
-    }
+  last: ILastActions = {
+    node: {},
+    edge: {}
+  }
+
+  enable: IEnabled = {
+    autoId: true,
+    autoCommit: true,
+    remoteSync: true
+  }
 
   /**
    * Create the AutomergeGraph instance
@@ -60,7 +72,7 @@ export class AutomergeGraph {
     this.options = options
     const createNotifier = options.createNotifier || this.createNotifier
     this.notifier = createNotifier(options)
-    this.enable = options.enable || {}
+    this.enable = Object.assign(this.enable, options.enable || {})
     this.label = label || 'autograph'
     this.doc = createDoc(options)
     const customGraph = createGraph ? createGraph(options) : options.graph
@@ -182,7 +194,8 @@ export class AutomergeGraph {
    * @param value
    * @param method
    */
-  getData(arg: any, value: any, method?: string) {
+  getData(arg: any, value: any, method: string) {
+    this.validateAction(method)
     method = String(method || value)
     let data: any
     if (isStr(arg)) {
@@ -217,14 +230,29 @@ export class AutomergeGraph {
     return this
   }
 
+  get actionTypes() {
+    return ['add', 'update', 'replace', 'remove']
+  }
+
+  actionType(name: string) {
+    return this.actionTypes.find((type: string) => new RegExp(type).test(name)) || 'unknown'
+  }
+
   /**
    * create an action object with data
    * @param data
    * @param action
    */
   createAction(data: any, action: any) {
+    const { name } = action
     action = Object.assign(data, action)
     this.actionToHistory(action)
+    const itemType = /Node$/.test(name) ? 'node' : 'edge'
+    const container = this.last[itemType]
+    const actionType = this.actionType(name)
+    container.action = action
+    container[actionType] = action
+
     this.action = action
     return action
   }
@@ -238,7 +266,7 @@ export class AutomergeGraph {
     this.action = this.createAction(data, action)
     this.committer = this.createCommitter(action)
     this.mustCommit = true
-    if (this.autoCommit) {
+    if (this.enable.autoCommit) {
       this.commit()
     }
     return this
@@ -264,7 +292,7 @@ export class AutomergeGraph {
    * @param method
    */
   validateAction(method: string) {
-    if (!this.enabled.remoteSync) return
+    if (!this.enable.remoteSync) return
     if (this.mustCommit) {
       this.error(`Invalid action ${method}. Must commit previous action ${this.lastAction.name} first`)
     }
@@ -277,7 +305,6 @@ export class AutomergeGraph {
    */
   addNode(id: any, value?: any) {
     const name = 'addNode'
-    this.validateAction(name)
     const data = this.getData(id, value, name)
     this.graph.addNode(data)
     return this.doAction({
@@ -292,7 +319,6 @@ export class AutomergeGraph {
    */
   updateNode(id: any, value?: any) {
     const name = 'updateNode'
-    this.validateAction(name)
     const data = this.getData(id, value, name)
     this.graph.updateNode(data)
     return this.doAction({
@@ -307,12 +333,15 @@ export class AutomergeGraph {
    */
   replaceNode(id: any, value?: any) {
     const name = 'replaceNode'
-    this.validateAction(name)
     const data = this.getData(id, value, name)
     this.graph.replaceNode(data)
     return this.doAction({
       name,
     }, data)
+  }
+
+  getId(idArg: any) {
+    return isStr(idArg) ? String(idArg) : String(idArg.id)
   }
 
   /**
@@ -322,8 +351,7 @@ export class AutomergeGraph {
   removeNode(idArg: any) {
     const name = 'removeNode'
     this.validateAction(name)
-    let id = isStr(idArg) ? String(idArg) : String(idArg.id)
-    id = this.validateAndFormatId(id, name)
+    const id = this.validateAndFormatId(this.getId(idArg), name)
     this.graph.removeNode(id)
     return this.doAction({
       name,
@@ -339,7 +367,6 @@ export class AutomergeGraph {
    */
   addEdge(id: any, opts?: any) {
     const name = 'addEdge'
-    this.validateAction(name)
     const data = this.getData(id, opts, name)
     this.graph.addEdge(data)
     return this.doAction({
@@ -354,7 +381,6 @@ export class AutomergeGraph {
    */
   updateEdge(id: any, opts?: any) {
     const name = 'updateEdge'
-    this.validateAction(name)
     const data = this.getData(id, opts, name)
     this.graph.updateEdge(data)
     return this.doAction({
@@ -369,8 +395,7 @@ export class AutomergeGraph {
   removeEdge(idArg: any) {
     const name = 'removeEdge'
     this.validateAction(name)
-    let id = isStr(idArg) ? String(idArg) : String(idArg.id)
-    id = this.validateAndFormatId(id, name)
+    const id = this.validateAndFormatId(this.getId(idArg), name)
     this.graph.updateEdge(id)
     return this.doAction({
       name,
