@@ -32,16 +32,27 @@ export class AutomergeGraph {
   enable: {
     autoId: boolean
   }
-  actionHistory: any[]
+  action: any
+  actionHistory: any[] = []
+  actionCommitHistory: any[] = []
   committer: Committer
   mustCommit: boolean
   autoCommit: boolean
+  enabled: {
+    remoteSync: boolean
+  } = {
+      remoteSync: true
+    }
 
   /**
    * Create the AutomergeGraph instance
    * @param options
    */
   constructor(options: any = {}) {
+    this.init(options)
+  }
+
+  init(options: any = {}) {
     const {
       label,
       createGraph // pass your own graph factory
@@ -196,13 +207,26 @@ export class AutomergeGraph {
     return createCommitter(this.doc, action, this.committerOpts)
   }
 
+  actionToHistory(action: any) {
+    this.actionHistory.push(action)
+    return this
+  }
+
+  actionToCommitHistory(action: any) {
+    this.actionCommitHistory.push(action)
+    return this
+  }
+
   /**
    * create an action object with data
    * @param data
    * @param action
    */
   createAction(data: any, action: any) {
-    return Object.assign(data, action)
+    action = Object.assign(data, action)
+    this.actionToHistory(action)
+    this.action = action
+    return action
   }
 
   /**
@@ -211,8 +235,7 @@ export class AutomergeGraph {
    * @param data
    */
   doAction(action: any, data: any = {}) {
-    action = this.createAction(data, action)
-    this.actionHistory.push(action)
+    this.action = this.createAction(data, action)
     this.committer = this.createCommitter(action)
     this.mustCommit = true
     if (this.autoCommit) {
@@ -231,6 +254,7 @@ export class AutomergeGraph {
    */
   commit(message?: string) {
     this.committer.commit(message)
+    this.actionToCommitHistory(this.action)
     this.mustCommit = false
     return this
   }
@@ -240,6 +264,7 @@ export class AutomergeGraph {
    * @param method
    */
   validateAction(method: string) {
+    if (!this.enabled.remoteSync) return
     if (this.mustCommit) {
       this.error(`Invalid action ${method}. Must commit previous action ${this.lastAction.name} first`)
     }
